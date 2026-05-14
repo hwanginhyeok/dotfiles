@@ -1,0 +1,15 @@
+# 민감/대용량 파일
+.credentials.json
+history.jsonl
+policy-limits.json
+settings-glm.json
+shell-snapshots/
+sessions/
+paste-cache/
+cache/
+backups/
+file-history/
+telemetry/
+tasks/
+projects/
+.last-cleanup
