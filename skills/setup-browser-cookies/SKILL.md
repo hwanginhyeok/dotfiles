@@ -1,0 +1,1 @@
+/home/window11/.claude/skills/gstack/setup-browser-cookies/SKILL.md

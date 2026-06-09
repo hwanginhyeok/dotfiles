@@ -1,0 +1,1 @@
+/home/window11/.claude/skills/gstack/qa/SKILL.md
