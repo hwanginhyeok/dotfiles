@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{사업자명} 세무 분석 리포트 ({귀속연도}귀속)</title>
+<style>
+  /* ── 기본 ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: '맑은 고딕', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
+    font-size: 13px;
+    color: #1a1a2e;
+    background: #f8f9fb;
+    padding: 32px 16px;
+    line-height: 1.6;
+  }
+
+  /* ── 인쇄 ── */
+  @media print {
+    body { background: #fff; padding: 0; font-size: 11px; }
+    .page-break { page-break-before: always; }
+    .no-print { display: none; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+  }
+
+  /* ── 레이아웃 ── */
+  .report-wrap { max-width: 900px; margin: 0 auto; }
+
+  /* ── 헤더 ── */
+  .report-header {
+    background: linear-gradient(135deg, #1a3c6e 0%, #2563a8 100%);
+    color: #fff;
+    border-radius: 10px;
+    padding: 28px 32px 22px;
+    margin-bottom: 24px;
+  }
+  .report-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(5, auto);
+    gap: 8px 24px;
+    margin-top: 12px;
+  }
+  .meta-item { font-size: 12px; opacity: 0.88; }
+  .meta-item strong { display: block; font-size: 10px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; }
+  .disclaimer {
+    margin-top: 14px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 6px;
+    font-size: 11px;
+    opacity: 0.85;
+  }
+
+  /* ── 카드 ── */
+  .card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    padding: 20px 24px;
+    margin-bottom: 18px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a3c6e;
+    border-left: 4px solid #2563a8;
+    padding-left: 10px;
+    margin-bottom: 14px;
+  }
+
+  /* ── 표 ── */
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th {
+    background: #1a3c6e;
+    color: #fff;
+    font-weight: 600;
+    padding: 7px 10px;
+    text-align: center;
+  }
+  td { padding: 6px 10px; border-bottom: 1px solid #e8ecf2; }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #f5f7fb; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.label { color: #4a5568; font-weight: 500; }
+
+  /* ── 일정 D-0 강조 ── */
+  .dday-urgent { color: #d32f2f; font-weight: 700; }
+
+  /* ── 세액 비교 ── */
+  .tax-compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .tax-col { border: 1px solid #e2e8f0; border-radius: 7px; overflow: hidden; }
+  .tax-col-header {
+    padding: 8px 14px;
+    font-weight: 700;
+    font-size: 13px;
+    text-align: center;
+  }
+  .tax-col-header.book { background: #e8f4fd; color: #1a3c6e; }
+  .tax-col-header.estimate { background: #fef3e2; color: #7c4d00; }
+  .tax-col table { font-size: 12px; }
+  .tax-col td { padding: 5px 12px; }
+  .tax-col td:first-child { color: #555; }
+  .tax-col td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .tax-col tr.total-row td { font-weight: 700; background: #f0f4ff; }
+
+  /* ── 유리방식 강조 ── */
+  .winner-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #e8f4fd;
+    border: 2px solid #2563a8;
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-bottom: 14px;
+  }
+  .winner-label { font-size: 12px; color: #4a5568; }
+  .winner-value { font-size: 18px; font-weight: 800; color: #1a3c6e; }
+  .saving-value { font-size: 18px; font-weight: 800; color: #d32f2f; }
+
+  /* ── 부가세 ── */
+  .vat-inline { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  .vat-chip {
+    background: #f0f4ff;
+    border: 1px solid #c7d7f5;
+    border-radius: 5px;
+    padding: 4px 12px;
+    font-size: 12px;
+  }
+  .vat-chip strong { color: #1a3c6e; }
+
+  /* ── 절세 카드 ── */
+  .tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .tip-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    padding: 12px 14px;
+  }
+  .tip-card h4 {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #1a3c6e;
+    margin-bottom: 6px;
+  }
+  .tip-row { font-size: 11.5px; color: #555; margin-bottom: 3px; }
+  .tip-effect { color: #2a7d2e; font-weight: 600; }
+
+  /* ── 액션 ── */
+  .action-list { list-style: none; counter-reset: action-counter; }
+  .action-list li {
+    counter-increment: action-counter;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px dashed #e2e8f0;
+    font-size: 12.5px;
+  }
+  .action-list li:last-child { border-bottom: none; }
+  .action-num {
+    width: 22px; height: 22px;
+    background: #2563a8; color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    flex-shrink: 0;
+    content: counter(action-counter);
+  }
+
+  /* ── 주의 박스 ── */
+  .warning-box {
+    background: #fff8e1;
+    border: 1px solid #ffcc02;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: #6b4c00;
+    margin-top: 16px;
+  }
+  .warning-box strong { color: #c45800; }
+
+  /* ── 프로파일 그리드 ── */
+  .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; }
+  .profile-row { display: flex; gap: 8px; font-size: 12px; padding: 4px 0; border-bottom: 1px solid #eef1f6; }
+  .profile-key { color: #4a5568; flex: 0 0 80px; font-weight: 600; }
+  .profile-val { color: #1a1a2e; }
+
+  /* ── 섹션 번호 ── */
+  .section-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    background: #2563a8;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+<div class="report-wrap">
+
+  <!-- ① 헤더 -->
+  <div class="report-header">
+    <h1>📊 {사업자명} &nbsp;|&nbsp; 세무 분석 리포트</h1>
+    <div class="meta-grid">
+      <div class="meta-item"><strong>업종</strong>{업종}</div>
+      <div class="meta-item"><strong>업종코드</strong>{업종코드}</div>
+      <div class="meta-item"><strong>과세유형</strong>{과세유형}</div>
+      <div class="meta-item"><strong>귀속연도</strong>{귀속연도}년</div>
+      <div class="meta-item"><strong>작성일</strong>{작성일}</div>
+    </div>
+    <div class="disclaimer">
+      ⚠ 본 리포트는 준비·시뮬레이션 보조용입니다. 최종 신고는 홈택스 또는 세무대리인에게 확정하세요.
+    </div>
+  </div>
+
+  <!-- ② 세무 프로파일 -->
+  <div class="card">
+    <div class="card-title"><span class="section-num">②</span>세무 프로파일</div>
+    <div class="profile-grid">
+      <div class="profile-row"><span class="profile-key">업종그룹</span><span class="profile-val">{프로파일_업종그룹}</span></div>
+      <div class="profile-row"><span class="profile-key">장부의무</span><span class="profile-val">{프로파일_장부의무}</span></div>
+      <div class="profile-row" style="grid-column: 1/-1"><span class="profile-key">의무근거</span><span class="profile-val">{프로파일_장부의무근거}</span></div>
+      <div class="profile-row"><span class="profile-key">경비율등급</span><span class="profile-val">{프로파일_경비율등급}</span></div>
+      <div class="profile-row"><span class="profile-key">성실신고</span><span class="profile-val">{프로파일_성실신고}</span></div>
+      <div class="profile-row" style="grid-column: 1/-1"><span class="profile-key">복식부기전환</span><span class="profile-val">{프로파일_복식부기전환}</span></div>
+    </div>
+  </div>
+
+  <!-- ③ 신고 일정 -->
+  <div class="card">
+    <div class="card-title"><span class="section-num">③</span>신고 일정</div>
+    <table>
+      <thead>
+        <tr>
+          <th>마감일</th>
+          <th>신고 항목</th>
+          <th>D-day</th>
+        </tr>
+      </thead>
+      <tbody>
+{일정_행}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ④ 세액 추정 -->
+  <div class="card">
+    <div class="card-title"><span class="section-num">④</span>세액 추정 — 장부 vs 추계 비교</div>
+
+    <div class="winner-box">
+      <div>
+        <div class="winner-label">유리한 신고 방식</div>
+        <div class="winner-value">✅ {유리한방식}</div>
+      </div>
+      <div style="border-left: 2px solid #2563a8; padding-left: 16px;">
+        <div class="winner-label">절세 효과 (추계 대비)</div>
+        <div class="saving-value">🔻 절감액 {절감액}원</div>
+      </div>
+    </div>
+
+    <div class="tax-compare-grid">
+      <!-- 장부 -->
+      <div class="tax-col">
+        <div class="tax-col-header book">📗 {장부_방식}</div>
+        <table>
+{장부_행}
+        </table>
+      </div>
+      <!-- 추계 -->
+      <div class="tax-col">
+        <div class="tax-col-header estimate">📙 {추계_방식}</div>
+        <table>
+{추계_행}
+        </table>
+      </div>
+    </div>
+
+    <!-- 부가세 -->
+    <div style="margin-top: 8px;">
+      <div style="font-size: 12px; font-weight: 700; color: #555; margin-bottom: 6px;">부가세 (연간)</div>
+      <div class="vat-inline">
+{부가세_칩}
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ 절세 전략 -->
+  <div class="card">
+    <div class="card-title"><span class="section-num">⑤</span>절세 전략</div>
+
+    <div style="font-size: 12px; font-weight: 700; color: #2a7d2e; margin-bottom: 8px;">ⓐ 올해 바로 반영</div>
+    <div class="tips-grid" style="margin-bottom: 14px;">
+{절세_올해_카드}
+    </div>
+
+    <div style="font-size: 12px; font-weight: 700; color: #7c4d00; margin-bottom: 8px;">ⓑ 내년 세팅</div>
+    <div class="tips-grid">
+{절세_내년_카드}
+    </div>
+  </div>
+
+  <!-- ⑥ 다음 액션 + 주의 -->
+  <div class="card">
+    <div class="card-title"><span class="section-num">⑥</span>다음 액션</div>
+    <ul class="action-list">
+{액션_목록}
+    </ul>
+    <div class="warning-box">
+      <strong>⚠ 주의 </strong>{주의}
+    </div>
+  </div>
+
+</div><!-- /report-wrap -->
+</body>
+</html>
