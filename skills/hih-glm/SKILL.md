@@ -1,57 +1,86 @@
 ---
 name: hih-glm
 description: |
-  GLM (Z.ai Pro 정액)을 외부 리뷰어로 호출해 독립적 두 번째 의견을 받는다.
-  /codex와 동일한 3-모드 구조 (review/challenge/consult).
-  3 모드 모두 GLM 5.1 default (정확도 우선).
-  대상 프로젝트 tmux 세션의 pane 2 사용 (TARGET 경로 또는 HIH_GLM_SESSION으로 자동 결정).
-  pane 2 없으면 자동 생성 + claude-glm 5.1 자동 시작.
-  headless 호출 X (Anthropic console로 fallback해서 Z.ai Pro 정액 안 적용됨, $0.40 손실 사례).
+  Call GLM (Z.ai Pro flat-rate) as an external reviewer to get an independent second opinion.
+  Same 3-mode structure as /codex (review/challenge/consult).
+  All 3 modes default to GLM 5.1 (accuracy first).
+  Uses pane 2 of the target project's tmux session (auto-determined from the TARGET path or HIH_GLM_SESSION).
+  If pane 2 doesn't exist, auto-create it + auto-start claude-glm 5.1.
+  No headless calls (it falls back to the Anthropic console so the Z.ai Pro flat rate doesn't apply — a $0.40 loss case).
 
-  - review: diff/commit 코드 리뷰 + GATE PASS/FAIL + synthesis recommendation
-  - challenge: 적대적 — 코드를 깨려고 시도 + synthesis recommendation
-  - consult: 자유 질의 (단발) + synthesis recommendation
-  - 인자 없음: diff 자동 감지 후 AskUserQuestion으로 모드 선택 (/codex와 동일)
+  - review: code review of diff/commit + GATE PASS/FAIL + synthesis recommendation
+  - challenge: adversarial — attempt to break the code + synthesis recommendation
+  - consult: free-form question (one-shot) + synthesis recommendation
+  - no args: auto-detect diff, then pick the mode via AskUserQuestion (same as /codex)
 
-  /hih-dual은 별도 (builder/reviewer 사이클, 4.6 reviewer).
-  /hih-dev STEP 5에서 /review + /codex + /hih-glm 3-way 비교로 자동 호출됨.
-  Use when: "glm review", "glm challenge", "glm consult", "두 번째 의견 GLM"
+  /hih-dual is separate (builder/reviewer cycle, 4.6 reviewer).
+  In /hih-dev STEP 5, it is auto-invoked for the /review + /codex + /hih-glm 3-way comparison.
+  Use when: "glm review", "glm challenge", "glm consult", "second opinion GLM"
 allowed-tools:
   - Bash
   - Read
   - Write
 ---
 
-# /hih-glm — GLM 5.1 두 번째 의견 (pane TUI 방식)
+# /hih-glm — GLM 5.1 second opinion (pane TUI method)
 
-## 핵심 원리
+## Core principle
 
-GLM headless 호출(`claude --bare -p`)은 Anthropic console subscription auth로
-fallback돼서 Z.ai Pro 정액이 안 적용된다 (Haiku로 라우팅 + $0.40 손해 사례 검증됨).
-**pane TUI에서 `claude-glm` alias로 띄운 세션만 Z.ai 정액 적용**된다.
+A GLM headless call (`claude --bare -p`) falls back to Anthropic console subscription auth,
+so the Z.ai Pro flat rate doesn't apply (verified: routes to Haiku + a $0.40 loss case).
+**Only a session launched in a pane TUI via the `claude-glm` alias gets the Z.ai flat rate.**
 
-따라서 /hih-glm은 **호출자 tmux 세션의 pane 2 (claude-glm 5.1 default)** 를 사용한다.
-PM이 pane 2에 prompt를 paste-buffer로 전달 → 응답을 capture-pane으로 추출 → verbatim 출력.
+Therefore /hih-glm uses **pane 2 of the caller's tmux session (claude-glm 5.1 default)**.
+The PM sends the prompt to pane 2 via paste-buffer → extracts the response via capture-pane → outputs it verbatim.
 
-## 모델 정책 (전사 룰)
+---
 
-| 상황 | 모델 | 이유 |
+## ★ /hih-claude와의 관계 — 공통 TUI 세션 제어 패턴
+
+> **본 스킬은 /hih-claude와 동일한 TUI 세션 제어 패턴을 사용한다.**
+> 구조(Step 0 ~ Step 2C), paste → poll → capture 플로우, GATE 판정 로직, idle polling,
+> error handling 테이블이 모두 동일하다.
+> 아래에 공통 패턴에서 **이 스킬만의 차이점**만 별도 정의하고,
+> 나머지는 /hih-claude의 해당 Step과 동일 구조를 따른다.
+
+### 차이점 요약 (공통 패턴에서 교체되는 항목)
+
+| 항목 | hih-glm (본 파일) | hih-claude 참조 |
 |---|---|---|
-| **pane 2 평상시 default** | **GLM 5.1** | 정확도 우선. 거짓 우려 적음 (4.6 대비 검증됨) |
-| /hih-glm review/challenge/consult | 5.1 그대로 | 이미 default라 전환 X |
-| /hih-dual reviewer 사이클 | 4.6 임시 전환 | 빠른 사이클, PM 검증 백스톱 있음 |
-| 사용자가 직접 빠른 코드 작업 | 사용자가 `/model glm-4.6` 수동 토글 | 강제 X, 사용자 판단 |
+| 대상 pane | **2** | 3 |
+| CLI 명령 | `claude-glm --model glm-5.1` | `claude --model claude-opus-4-7` |
+| 사전 검증 | `$Z_AI_API_KEY` 존재 확인 | `which claude` |
+| 세션 환경변수 | `HIH_GLM_SESSION` | `HIH_CLAUDE_SESSION` |
+| 임시파일 접두어 | `hih_glm_` | `hih_claude_` |
+| 버퍼명 | `hih_glm_buf` | `hih_claude_buf` |
+| 프롬프트 언어 | **한국어** | 영어 |
+| 모델 정책 | GLM 5.1 단일 | Opus 4.7 단일 |
+| 비용 | $0 (Z.ai Pro 정액) | API flat rate |
+| N-way 비교 포함 모델 | Claude /review, /codex, /hih-glm | + /hih-claude |
 
-trade-off: 5.1은 4.6 대비 응답 ~30% 느림 (실측 1m20s vs 2m30s). 정액이라 비용 X.
-정확도 가치가 latency 비용보다 큼 (거짓 우려 검증 시간 절약).
+---
 
-## 전제 조건
+## Model policy (org-wide rule)
 
-1. 대상 tmux 세션이 존재 (없으면 에러).
-2. `Z_AI_API_KEY` 환경변수 설정.
-3. **pane 2 없으면 자동 생성 + `claude-glm --model glm-5.1` 자동 시작**.
+| Situation | Model | Reason |
+|---|---|---|
+| **pane 2 normal default** | **GLM 5.1** | Accuracy first. Fewer false concerns (verified vs 4.6) |
+| /hih-glm review/challenge/consult | 5.1 as-is | Already default, so no switch |
+| /hih-dual reviewer cycle | Temporary switch to 4.6 | Fast cycle, with PM verification as backstop |
+| User doing fast code work directly | User manually toggles `/model glm-4.6` | Not forced, user's judgment |
 
-## Step 0: 환경 + 세션/pane 결정
+trade-off: 5.1 responds ~30% slower than 4.6 (measured 1m20s vs 2m30s). Flat rate, so no cost.
+The value of accuracy outweighs the latency cost (saves time verifying false concerns).
+
+## Prerequisites
+
+1. The target tmux session exists (error if not).
+2. The `Z_AI_API_KEY` environment variable is set.
+3. **If pane 2 doesn't exist, auto-create it + auto-start `claude-glm --model glm-5.1`.**
+
+## Step 0: environment + session/pane determination
+
+> /hih-claude Step 0와 동일 구조. 차이점: 사전검증 → `$Z_AI_API_KEY`, pane → **2**, CLI → `claude-glm --model glm-5.1`, 환경변수 → `HIH_GLM_SESSION`
 
 ```bash
 [ -n "$Z_AI_API_KEY" ] || { echo "❌ Z_AI_API_KEY 없음. ~/.bashrc에 Z_AI_API_KEY 설정"; exit 1; }
@@ -108,7 +137,9 @@ case "$PANE2_INFO" in
 esac
 ```
 
-## Step 0.5: diff 자동 감지 + 모드 선택 (/codex와 동일 구조)
+## Step 0.5: auto-detect diff + mode selection
+
+> /hih-claude Step 0.5와 동일 구조. diff 감지 로직 완전 동일. AskUserQuestion 메시지만 한국어.
 
 ```bash
 # base branch 감지
@@ -118,7 +149,7 @@ echo "BASE: $_BASE"
 echo "DIFF: $_DIFF_STAT"
 ```
 
-**인자 없음 + diff 있음** → AskUserQuestion:
+**No args + diff present** → AskUserQuestion:
 ```
 GLM이 현재 브랜치 diff에 대해 무엇을 할까?
 A) 코드 리뷰 (PASS/FAIL 게이트) — recommended
@@ -126,22 +157,20 @@ B) 챌린지 (적대적, 코드 깨기 시도)
 C) 직접 질문 입력
 ```
 
-**인자 있음** → 파싱해서 바로 진행:
+**Args present** → parse and proceed directly:
 - `review <commit-or-diff-path> [focus]` → Step 2A
 - `challenge <commit-or-file> [focus]` → Step 2B
 - `consult <question...>` → Step 2C
 
-## Step 1: 모드 분기
+## Step 1: mode branching
 
-ARGUMENTS 파싱:
-- `review <commit-or-diff-path> [focus]` → Step 2A
-- `challenge <commit-or-file> [focus]` → Step 2B
-- `consult <question...>` → Step 2C
-- 인자 없음 → Step 0.5에서 AskUserQuestion 처리
+> /hih-claude Step 1과 동일.
 
-## Step 2A: review 모드
+## Step 2A: review mode
 
-### 2A-1: diff 추출
+### 2A-1: extract diff
+
+> /hih-claude 2A-1과 동일 구조. 임시파일 접두어만 `hih_glm_`.
 
 ```bash
 TARGET="$1"  # commit hash, HEAD, 또는 파일 경로
@@ -157,9 +186,11 @@ else
 fi
 ```
 
-### 2A-2: review prompt 구성 + paste
+### 2A-2: build review prompt + paste
 
-(모델 전환 단계 X — pane 2가 이미 5.1 default)
+> /hih-claude 2A-2와 동일 구조. **프롬프트만 한국어.** 버퍼명 → `hih_glm_buf`, pane → `${SESSION}.2`.
+
+(No model-switch step — pane 2 is already 5.1 default)
 
 ```bash
 PROMPT_FILE="/tmp/hih_glm_prompt_${TS}.txt"
@@ -202,7 +233,9 @@ tmux send-keys -t "${SESSION}.2" Enter
 tmux delete-buffer -b hih_glm_buf
 ```
 
-### 2A-3: idle 폴링 + 응답 capture
+### 2A-3: idle polling + response capture
+
+> /hih-claude 2A-3과 동일 구조. pane → `${SESSION}.2`, 임시파일 → `hih_glm_`.
 
 ```bash
 RESP_FILE="/tmp/hih_glm_response_${TS}.txt"
@@ -227,7 +260,9 @@ done
 tmux capture-pane -t "${SESSION}.2" -p -S -3000 > "$RESP_FILE"
 ```
 
-### 2A-4: GATE 판정
+### 2A-4: GATE judgment
+
+> /hih-claude 2A-4와 완전 동일 로직 (awk + grep 패턴).
 
 ```bash
 # CRITICAL 섹션 본문 검사 (헤더 다음 라인부터)
@@ -241,7 +276,9 @@ else
 fi
 ```
 
-### 2A-5: 출력 (verbatim) + synthesis recommendation
+### 2A-5: output (verbatim) + synthesis recommendation
+
+> /hih-claude 2A-5와 동일 구조. 출력 헤더만 "GLM 5.1 SAYS", 비용 → "$0 (Z.ai Pro 정액)".
 
 ```
 GLM 5.1 SAYS (review):
@@ -253,16 +290,18 @@ GATE: PASS|FAIL (N)
 Duration: Xs  Cost: $0 (Z.ai Pro 정액)
 ```
 
-**synthesis recommendation (REQUIRED)** — verbatim 출력 후 반드시 1줄 추가:
+**synthesis recommendation (REQUIRED)** — after the verbatim output, always add exactly 1 line:
 ```
 Recommendation: <액션> because <가장 actionable한 발견을 구체적으로 명시한 이유>
 ```
-- 이유는 CRITICAL/INFORMATIONAL 중 가장 영향이 큰 항목을 명시해야 함
-- "좋아서", "안전해서" 같은 일반적 이유 금지 — 실제 발견 언급 필수
+- The reason must name the highest-impact item among CRITICAL/INFORMATIONAL
+- Generic reasons like "because it's good" or "because it's safe" are prohibited — referencing the actual finding is required
 
-### 2A-6: cross-model 비교 (선택적)
+### 2A-6: cross-model comparison (optional)
 
-이번 세션에서 `/codex review` 또는 `/review`(Claude)가 이미 실행된 경우 3-way 비교:
+> /hih-claude 2A-6과 동일 구조. 3-way (hih-glm은 /hih-claude 미포함).
+
+If `/codex review` or `/review` (Claude) was already run in this session, do a 3-way comparison:
 
 ```
 ## 3-WAY 크로스 모델 분석
@@ -279,9 +318,11 @@ Recommendation: <액션> because <가장 actionable한 발견을 구체적으로
 종합 권고: <3개 모델 분석 기반 최종 액션>
 ```
 
-## Step 2B: challenge 모드
+## Step 2B: challenge mode
 
-2A와 동일 구조. prompt만 적대적으로:
+> /hih-claude 2B와 동일 구조. 프롬프트만 한국어. GATE 로직 동일.
+
+Same structure as 2A. Only the prompt becomes adversarial:
 
 ```
 [적대적 검증] 이 코드가 PROD에서 깨질 시나리오를 찾는다.
@@ -299,9 +340,9 @@ Recommendation: <액션> because <가장 actionable한 발견을 구체적으로
 ## 권고 픽스 (1줄씩)
 ```
 
-GATE: 깨질 시나리오 "높음" 등급 1+건 → FAIL, 그 외 → PASS.
+GATE: 1+ break scenario rated "높음" (high) → FAIL, otherwise → PASS.
 
-출력 형식:
+Output format:
 ```
 GLM 5.1 SAYS (challenge):
 ═══════════════════════════════════════════════
@@ -310,21 +351,23 @@ GLM 5.1 SAYS (challenge):
 GATE: PASS|FAIL
 ```
 
-**synthesis recommendation (REQUIRED)** — verbatim 출력 후 반드시 1줄:
+**synthesis recommendation (REQUIRED)** — after the verbatim output, always exactly 1 line:
 ```
 Recommendation: <액션> because <blast radius 기준 가장 위험한 시나리오 명시>
 ```
 
-## Step 2C: consult 모드
+## Step 2C: consult mode
 
-prompt = filesystem boundary + 사용자 질문 그대로.
-동일하게 5.1 default로 호출. 모델 전환 X.
+> /hih-claude 2C와 동일 구조. 프롬프트 언어만 한국어.
 
-세션 연속성 X (단발). 후속은 사용자가 다시 호출 (이전 컨텍스트 prompt에 박아서).
+prompt = filesystem boundary + the user's question as-is.
+Call the same way at 5.1 default. No model switch.
 
-GATE 판정 X — 출력만 verbatim.
+No session continuity (one-shot). For follow-ups the user calls again (baking the prior context into the prompt).
 
-출력 형식:
+No GATE judgment — output only, verbatim.
+
+Output format:
 ```
 GLM 5.1 SAYS (consult):
 ═══════════════════════════════════════════════
@@ -333,33 +376,33 @@ GLM 5.1 SAYS (consult):
 Cost: $0 (Z.ai Pro 정액)
 ```
 
-**synthesis recommendation (REQUIRED)** — verbatim 출력 후 반드시 1줄:
+**synthesis recommendation (REQUIRED)** — after the verbatim output, always exactly 1 line:
 ```
 Recommendation: <액션> because <가장 actionable한 GLM 인사이트 명시>
 ```
 
-## 호출자 pane 매핑 — 자동 + 오버라이드
+## Caller pane mapping — automatic + override
 
-기본: cwd basename → tmux 세션. 예외 시 환경변수 또는 인자:
+Default: cwd basename → tmux session. For exceptions, use an environment variable or argument:
 
 ```bash
 # 우선순위: --session 인자 > $HIH_GLM_SESSION > basename(pwd)
 SESSION="${ARG_SESSION:-${HIH_GLM_SESSION:-$(basename $(pwd))}}"
 ```
 
-## 에러 처리
+## Error handling
 
-| 케이스 | 처리 |
+| Case | Handling |
 |---|---|
-| Z_AI_API_KEY 없음 | "~/.bashrc에 Z_AI_API_KEY 설정" |
-| tmux 세션 없음 | 에러 + 생성 명령 안내 (자동 생성 X — 세션은 사용자 몫) |
-| pane 2 없음 | **자동 생성** (`tmux split-window -h`) + `claude-glm --model glm-5.1` 자동 시작 |
-| pane 2가 4.6 | 경고 + 그래도 진행 (5.1 권장 메시지) |
-| pane 2가 GLM 아님 | 경고 + 그래도 진행 |
-| idle 10분 timeout | 강제 capture + "GLM 무응답 — pane 직접 확인" |
-| 빈 응답 | "GLM 응답 비어있음 — pane 직접 확인" |
+| Z_AI_API_KEY missing | "Set Z_AI_API_KEY in ~/.bashrc" |
+| tmux session missing | Error + guidance on the create command (no auto-create — the session is the user's responsibility) |
+| pane 2 missing | **Auto-create** (`tmux split-window -h`) + auto-start `claude-glm --model glm-5.1` |
+| pane 2 is 4.6 | Warn + proceed anyway (5.1-recommended message) |
+| pane 2 not GLM | Warn + proceed anyway |
+| idle 10-min timeout | Force capture + "GLM unresponsive — check the pane directly" |
+| empty response | "GLM response is empty — check the pane directly" |
 
-## 사용 예
+## Usage examples
 
 ```bash
 # 최근 commit 리뷰 (cwd가 music-lab)
@@ -372,29 +415,29 @@ SESSION="${ARG_SESSION:-${HIH_GLM_SESSION:-$(basename $(pwd))}}"
 /hih-glm challenge scripts/token_guard.py 동시성
 
 # 자유 질의
-/hih-glm consult "Suno API polling이 v1+v2 페어 보장하나?"
+/hih-glm consult "Suno API polling이 v1+v2 페어 보증하나?"
 ```
 
-## 핵심 원칙
+## Core principles
 
-1. **응답은 verbatim** — 자르거나 요약 X.
-2. **PM이 사실 검증 백스톱** — GLM이 거짓 우려 던지면 PM이 grep/python으로 정정 후 사용자 보고. 5.1은 거짓 우려 적지만 0은 아님 (실측 검증).
-3. **5.1 default 유지** — review/challenge/consult 모두 5.1. 모델 전환 X (헷갈림 + latency 추가 비용).
-4. **단발** — 세션 연속 X. 후속은 다시 호출.
-5. **headless 호출 금지** — Anthropic console fallback 위험. pane TUI만 사용.
+1. **Responses are verbatim** — no truncation or summarizing.
+2. **PM is the fact-check backstop** — if GLM throws a false concern, the PM corrects it with grep/python before reporting to the user. 5.1 has fewer false concerns but not zero (measured/verified).
+3. **Keep 5.1 default** — review/challenge/consult all use 5.1. No model switch (causes confusion + adds latency cost).
+4. **One-shot** — no session continuity. For follow-ups, call again.
+5. **Headless calls prohibited** — risk of Anthropic console fallback. Use the pane TUI only.
 
-## 임시 파일 청소
+## Temp file cleanup
 
 ```bash
 find /tmp -maxdepth 1 -name "hih_glm_*" -mtime +7 -delete 2>/dev/null
 ```
 
-## 검증 사례 (2026-05-06)
+## Verification case (2026-05-06)
 
-PIPE-F10 v2 (commit 91046ab) GLM 5.1 리뷰 실측:
+PIPE-F10 v2 (commit 91046ab) GLM 5.1 review, measured:
 - Duration: 2m30s, Cost: $0
-- CRITICAL: 0건 (4.6이 거짓 우려 던졌던 MRO 가로채기를 5.1이 직접 검증해서 무효화)
-- INFORMATIONAL: 7건 (모두 LOW~P3, BLOCK_HOURS 삭제 / OSError 범위 / rate_limit 매칭 실증 / --check CLI break 등)
-- 종합: "배포 가능. v1 핵심 문제 정확 해결, I-4(rate_limit)만 실증 확인 권고"
+- CRITICAL: 0 (5.1 directly verified and invalidated the MRO interception that 4.6 had thrown as a false concern)
+- INFORMATIONAL: 7 (all LOW~P3 — delete BLOCK_HOURS / OSError scope / rate_limit matching empirical check / --check CLI break, etc.)
+- Summary: "Deployable. Accurately resolves v1's core problem; only I-4 (rate_limit) is recommended for empirical confirmation."
 
-→ 4.6 v1+v2 재리뷰 (거짓 우려 2건) 대비 정확도 명확 우위.
+→ Clear accuracy advantage over the 4.6 v1+v2 re-review (2 false concerns).

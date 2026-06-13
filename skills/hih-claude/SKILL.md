@@ -1,19 +1,19 @@
 ---
 name: hih-claude
 description: |
-  Fresh-context Claude (Opus 4.7)를 외부 리뷰어로 호출해 독립적 두 번째 의견을 받는다.
-  /hih-glm과 동일한 3-모드 구조 (review/challenge/consult).
-  대상 프로젝트 tmux 세션의 pane 3 사용 (TARGET 경로 또는 HIH_CLAUDE_SESSION으로 자동 결정).
-  pane 3 없으면 자동 생성 + claude --model claude-opus-4-7 자동 시작.
-  headless 호출 X (메인 OAuth 토큰 fallback 위험, feedback_oauth_token_no_share 참조).
+  Invoke a fresh-context Claude (Opus 4.7) as an external reviewer to get an independent second opinion.
+  Same 3-mode structure as /hih-glm (review/challenge/consult).
+  Uses pane 3 of the target project's tmux session (auto-determined from the TARGET path or HIH_CLAUDE_SESSION).
+  If pane 3 does not exist, it is auto-created + claude --model claude-opus-4-7 is auto-started.
+  No headless invocation (risk of the main OAuth token falling back, see feedback_oauth_token_no_share).
 
-  - review: diff/commit 코드 리뷰 + GATE PASS/FAIL + synthesis recommendation
-  - challenge: 적대적 — 코드를 깨려고 시도 + synthesis recommendation
-  - consult: 자유 질의 (단발) + synthesis recommendation
-  - 인자 없음: diff 자동 감지 후 AskUserQuestion으로 모드 선택 (/hih-glm과 동일)
+  - review: diff/commit code review + GATE PASS/FAIL + synthesis recommendation
+  - challenge: adversarial — attempt to break the code + synthesis recommendation
+  - consult: free-form query (one-shot) + synthesis recommendation
+  - no args: auto-detect diff, then select mode via AskUserQuestion (same as /hih-glm)
 
-  메인 PM이 Opus 4.7이라도 fresh-context의 Claude는 컨텍스트 격리 효과 (롱컨 PM의 편향/누락 보완).
-  /hih-dev STEP 5에서 /review + /codex + /hih-glm + /hih-claude 4-way 비교에 자동 호출 가능.
+  Even if the main PM is Opus 4.7, a fresh-context Claude provides context isolation (compensating for the bias/omissions of a long-context PM).
+  Can be auto-invoked in /hih-dev STEP 5 for the /review + /codex + /hih-glm + /hih-claude 4-way comparison.
   Use when: "claude review", "claude challenge", "claude consult", "두 번째 의견 Claude", "fresh Claude"
 allowed-tools:
   - Bash
@@ -22,46 +22,73 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-# /hih-claude — Fresh Opus 4.7 두 번째 의견 (pane TUI 방식)
+# /hih-claude — Fresh Opus 4.7 Second Opinion (pane TUI method)
 
-## 핵심 원리
+## Core Principle
 
-메인 세션의 Claude는 long context 누적으로 편향/누락이 생긴다. fresh-context의
-별도 Claude 인스턴스를 pane 3에 띄워 동일 코드/diff를 새 눈으로 보게 한다.
+The Claude in the main session accumulates long context, causing bias/omissions. A separate
+fresh-context Claude instance is launched in pane 3 to look at the same code/diff with fresh eyes.
 
-headless 호출(`claude --bare -p`)은 Anthropic OAuth 토큰을 외부 컨텍스트로 빠뜨릴
-위험이 있어 금지 (메모리 `feedback_oauth_token_no_share.md`). **pane TUI에서
-정상 부팅된 claude 인스턴스만 사용**한다.
+Headless invocation (`claude --bare -p`) risks leaking the Anthropic OAuth token into an external
+context, so it is prohibited (memory `feedback_oauth_token_no_share.md`). **Only use a claude
+instance that booted normally in a pane TUI.**
 
-따라서 /hih-claude는 **호출자 tmux 세션의 pane 3 (claude --model claude-opus-4-7)** 를 사용한다.
-호출자가 pane 3에 prompt를 paste-buffer로 전달 → 응답을 capture-pane으로 추출 → verbatim 출력.
+Therefore /hih-claude uses the **caller's tmux session pane 3 (claude --model claude-opus-4-7)**.
+The caller delivers the prompt to pane 3 via paste-buffer → extracts the response via capture-pane → outputs verbatim.
 
-## 모델 정책
+---
 
-| 상황 | 모델 | 이유 |
+## ★ 공통 TUI 세션 제어 패턴 (hih-claude = 정의원, hih-glm = 동일 패턴 사용)
+
+> **아래 Step 0 ~ Step 2C 구조는 /hih-glm과 완전히 동일한 패턴이다.**
+> 차이점만 별도 표기. hih-glm은 이 패턴을 참조하여 pane 번호·모델명·환경변수만 교체한다.
+
+### 공통 구조 vs 스킬별 차이
+
+| 항목 | hih-claude (본 파일) | hih-glm |
 |---|---|---|
-| **pane 3 default** | **Opus 4.7** | 메인과 동일 family지만 fresh context로 격리 |
-| review/challenge/consult | Opus 4.7 그대로 | 단일 모델 정책 |
-| 사용자가 더 가벼운 의견 원함 | `/model claude-sonnet-4-6` 수동 토글 | 강제 X |
+| 대상 pane | **3** | 2 |
+| CLI 명령 | `claude --model claude-opus-4-7` | `claude-glm --model glm-5.1` |
+| 사전 검증 | `which claude` | `$Z_AI_API_KEY` 존재 확인 |
+| 세션 환경변수 | `HIH_CLAUDE_SESSION` | `HIH_GLM_SESSION` |
+| 임시파일 접두어 | `hih_claude_` | `hih_glm_` |
+| 버퍼명 | `hih_claude_buf` | `hih_glm_buf` |
+| idle 마커 | `Cogitated for\|Brewed for\|...\|for agents` | 동일 |
+| GATE 판정 로직 | 동일 (awk + grep) | 동일 |
+| paste → poll → capture 플로우 | 동일 | 동일 |
+| review/challenge/consult 프롬프트 | 영어 | 한국어 |
+| 모델 정책 | Opus 4.7 단일 | GLM 5.1 단일 |
+| 비용 | API flat rate (main과 동일) | $0 (Z.ai Pro 정액) |
+| N-way 비교 시 포함 모델 | Claude /review, /codex, /hih-glm, /hih-claude | Claude /review, /codex, /hih-glm |
 
-trade-off: Opus 4.7은 Sonnet 4.6 대비 응답 느리고 비용 ↑. 단, 메인이 이미 Opus라
-의견 등급 일치가 중요할 때만 사용. 일반 리뷰는 /hih-glm (Z.ai 정액 $0) 우선.
+---
 
-## 전제 조건
+## Model Policy
 
-1. 대상 tmux 세션이 존재 (없으면 에러).
-2. `claude` CLI가 PATH에 있고 OAuth 인증 상태 (Anthropic console).
-3. **pane 3 없으면 자동 생성 + `claude --model claude-opus-4-7` 자동 시작**.
+| Situation | Model | Reason |
+|---|---|---|
+| **pane 3 default** | **Opus 4.7** | Same family as the main, but isolated via fresh context |
+| review/challenge/consult | Opus 4.7 as-is | Single-model policy |
+| User wants a lighter opinion | `/model claude-sonnet-4-6` manual toggle | Not forced |
 
-## Step 0: 환경 + 세션/pane 결정
+trade-off: Opus 4.7 is slower to respond and costs more than Sonnet 4.6. Use only when the main is
+already Opus and matching the opinion tier matters. For general reviews, prefer /hih-glm (Z.ai flat rate $0).
+
+## Preconditions
+
+1. The target tmux session exists (error if not).
+2. The `claude` CLI is on PATH and OAuth-authenticated (Anthropic console).
+3. **If pane 3 does not exist, it is auto-created + `claude --model claude-opus-4-7` auto-started.**
+
+## Step 0: Environment + session/pane determination
 
 ```bash
 which claude >/dev/null 2>&1 || { echo "❌ claude CLI 없음. https://claude.ai/code 설치"; exit 1; }
 
-# 세션 결정 우선순위:
-# 1. --session 명시 인자
-# 2. HIH_CLAUDE_SESSION 환경변수
-# 3. TARGET 경로에서 ~/프로젝트명 추론
+# Session resolution priority:
+# 1. --session explicit argument
+# 2. HIH_CLAUDE_SESSION environment variable
+# 3. infer ~/project-name from the TARGET path
 # 4. basename(pwd) fallback
 
 TARGET_ARG="$1"
@@ -78,40 +105,40 @@ if [ -z "$SESSION" ]; then
   fi
 fi
 
-# PM 디렉토리는 세션명이 "PM"
+# The PM directory's session name is "PM"
 [ "$SESSION" = "project-manager" ] && SESSION="PM"
 
-echo "[hih-claude] 대상 세션: $SESSION"
+echo "[hih-claude] Target session: $SESSION"
 
 tmux has-session -t "$SESSION" 2>/dev/null || {
   echo "❌ tmux 세션 '$SESSION' 없음."
-  echo "   생성 명령: tmux new -d -s $SESSION"
+  echo "   Create command: tmux new -d -s $SESSION"
   exit 1
 }
 
-# pane 3 없으면 자동 생성 + claude opus 4.7 시작
+# If pane 3 does not exist, auto-create + start claude opus 4.7
 PANE_COUNT=$(tmux list-panes -t "$SESSION" | wc -l)
 if [ "$PANE_COUNT" -lt 3 ]; then
-  echo "⚠️  $SESSION 세션에 pane 3 없음 → 자동 생성 + claude opus 4.7 시작..."
+  echo "⚠️  $SESSION 세션에 pane 3 없음 → auto-create + start claude opus 4.7..."
   tmux split-window -t "${SESSION}" -h
   tmux send-keys -t "${SESSION}.3" "claude --model claude-opus-4-7" Enter
-  echo "⏳ claude 부팅 대기 (20초)..."
+  echo "⏳ Waiting for claude to boot (20s)..."
   sleep 20
-  echo "✅ pane 3 준비 완료"
+  echo "✅ pane 3 ready"
 fi
 
-# pane 3 모델 검증
+# Verify pane 3 model
 PANE3_INFO=$(tmux capture-pane -t "${SESSION}.3" -p | grep -oE 'Opus [0-9.]+|Sonnet [0-9.]+|Haiku [0-9.]+' | head -1)
 echo "[hih-claude] session=$SESSION pane=3 model=$PANE3_INFO"
 
 case "$PANE3_INFO" in
-  *Opus*4.7*) echo "✅ Opus 4.7 — 권장 상태" ;;
-  *Sonnet*|*Haiku*) echo "⚠️  $PANE3_INFO — Opus 4.7 권장이지만 진행" ;;
-  *) echo "⚠️  Claude 모델 감지 실패 — 그래도 진행" ;;
+  *Opus*4.7*) echo "✅ Opus 4.7 — recommended state" ;;
+  *Sonnet*|*Haiku*) echo "⚠️  $PANE3_INFO — Opus 4.7 recommended but proceeding" ;;
+  *) echo "⚠️  Claude model detection failed — proceeding anyway" ;;
 esac
 ```
 
-## Step 0.5: diff 자동 감지 + 모드 선택
+## Step 0.5: Auto-detect diff + mode selection
 
 ```bash
 _BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || echo "master")
@@ -120,30 +147,30 @@ echo "BASE: $_BASE"
 echo "DIFF: $_DIFF_STAT"
 ```
 
-**인자 없음 + diff 있음** → AskUserQuestion:
+**No args + diff present** → AskUserQuestion:
 ```
-Fresh Claude가 현재 브랜치 diff에 대해 무엇을 할까?
-A) 코드 리뷰 (PASS/FAIL 게이트) — recommended
-B) 챌린지 (적대적, 코드 깨기 시도)
-C) 직접 질문 입력
+What should Fresh Claude do with the current branch diff?
+A) Code review (PASS/FAIL gate) — recommended
+B) Challenge (adversarial, attempt to break the code)
+C) Enter a direct question
 ```
 
-**인자 있음** → 파싱해서 바로 진행:
+**Args present** → parse and proceed immediately:
 - `review <commit-or-diff-path> [focus]` → Step 2A
 - `challenge <commit-or-file> [focus]` → Step 2B
 - `consult <question...>` → Step 2C
 
-## Step 1: 모드 분기
+## Step 1: Mode branching
 
-ARGUMENTS 파싱:
+Parse ARGUMENTS:
 - `review <commit-or-diff-path> [focus]` → Step 2A
 - `challenge <commit-or-file> [focus]` → Step 2B
 - `consult <question...>` → Step 2C
-- 인자 없음 → Step 0.5에서 AskUserQuestion 처리
+- No args → handled by AskUserQuestion in Step 0.5
 
-## Step 2A: review 모드
+## Step 2A: review mode
 
-### 2A-1: diff 추출
+### 2A-1: Extract diff
 
 ```bash
 TARGET="$1"
@@ -155,42 +182,42 @@ if [[ "$TARGET" =~ ^[a-f0-9]{6,}$ ]] || [ "$TARGET" = "HEAD" ]; then
 elif [ -f "$TARGET" ]; then
   cat "$TARGET" > "$DIFF_FILE"
 else
-  echo "❌ '$TARGET'은 commit hash도 파일도 아님"; exit 1
+  echo "❌ '$TARGET'은 commit hash도 파일도 아님 (neither a commit hash nor a file)"; exit 1
 fi
 ```
 
-### 2A-2: review prompt 구성 + paste
+### 2A-2: Build review prompt + paste
 
 ```bash
 PROMPT_FILE="/tmp/hih_claude_prompt_${TS}.txt"
 cat > "$PROMPT_FILE" << EOF
-[중요] ~/.claude/, ~/.agents/, .claude/skills/, agents/ 파일은 읽지 마라. 저장소 코드만 본다.
+[Important] Do NOT read files under ~/.claude/, ~/.agents/, .claude/skills/, agents/. Only look at the repository code.
 
-[리뷰어 모드] commit/diff 비판적 리뷰. 직접 수정 X. 리뷰 보고서만 markdown.
+[Reviewer mode] Critical review of the commit/diff. Do NOT edit directly. Review report in markdown only.
 
-자료:
-- diff 파일: $DIFF_FILE (Read 도구로 읽어)
-- 대상: $TARGET
-- focus: $2 (있으면 그 영역 우선)
+Materials:
+- diff file: $DIFF_FILE (read it with the Read tool)
+- target: $TARGET
+- focus: $2 (if provided, prioritize that area)
 
-체크리스트 (모두 짚어):
-1. 보안: 시크릿 노출, 권한, 인젝션
-2. 예외처리: 에러 분류, 부분 실패 시 상태 일관성
-3. 테스트: 누락 케이스, mock 정확성
-4. 한국어 메시지 일관성 (있으면)
-5. 코드 스타일·중복
-6. 회귀 위험
-7. 환경 의존성 (WSL/headless/cron)
+Checklist (cover all):
+1. Security: secret exposure, permissions, injection
+2. Exception handling: error classification, state consistency on partial failure
+3. Tests: missing cases, mock accuracy
+4. Korean message consistency (if any)
+5. Code style and duplication
+6. Regression risk
+7. Environment dependencies (WSL/headless/cron)
 
-거짓 우려 던지지 마라. 검증 가능한 사실만. 의심되면 "확인 필요" 명시.
+Do NOT throw false concerns. Only verifiable facts. If in doubt, explicitly mark "확인 필요" (needs verification).
 
-출력:
-## CRITICAL (배포 차단)
-## INFORMATIONAL (개선 권고)
-## OK (잘 된 부분)
-## 종합 평가 (1줄)
+Output:
+## CRITICAL (blocks deployment)
+## INFORMATIONAL (improvement recommendations)
+## OK (well done parts)
+## Overall assessment (1 line)
 
-먼저 $DIFF_FILE을 Read로 읽고 시작.
+Start by reading $DIFF_FILE with Read first.
 EOF
 
 tmux load-buffer -b hih_claude_buf "$PROMPT_FILE"
@@ -200,7 +227,7 @@ tmux send-keys -t "${SESSION}.3" Enter
 tmux delete-buffer -b hih_claude_buf
 ```
 
-### 2A-3: idle 폴링 + 응답 capture
+### 2A-3: idle polling + capture response
 
 ```bash
 RESP_FILE="/tmp/hih_claude_response_${TS}.txt"
@@ -209,10 +236,10 @@ TIMEOUT=600
 
 while true; do
   ELAPSED=$(($(date +%s) - START))
-  [ $ELAPSED -gt $TIMEOUT ] && { echo "⚠️  10분 timeout"; break; }
+  [ $ELAPSED -gt $TIMEOUT ] && { echo "⚠️  10-minute timeout"; break; }
 
   TAIL=$(tmux capture-pane -t "${SESSION}.3" -p | tail -8)
-  # Claude idle 마커: "for agents" 라벨이 보이고 ❯ prompt 라인이 비어있음
+  # Claude idle marker: the "for agents" label is visible and the ❯ prompt line is empty
   if echo "$TAIL" | grep -qE "Cogitated for|Brewed for|Worked for|Sautéed for|Cooked for|Baked for|for agents"; then
     if echo "$TAIL" | tail -3 | grep -qE "^❯ \s*$"; then
       sleep 2
@@ -225,7 +252,7 @@ done
 tmux capture-pane -t "${SESSION}.3" -p -S -3000 > "$RESP_FILE"
 ```
 
-### 2A-4: GATE 판정
+### 2A-4: GATE determination
 
 ```bash
 CRIT_BODY=$(awk '/^[#●] CRITICAL/,/^[#●] INFORMATIONAL/' "$RESP_FILE" | head -20)
@@ -238,165 +265,165 @@ else
 fi
 ```
 
-### 2A-5: 출력 (verbatim) + synthesis recommendation
+### 2A-5: Output (verbatim) + synthesis recommendation
 
 ```
 Claude Opus 4.7 SAYS (review):
 ═══════════════════════════════════════════════
-<응답 풀버전 — 자르거나 요약 X>
+<full response — do NOT truncate or summarize>
 ═══════════════════════════════════════════════
 GATE: PASS|FAIL (N)
-대상: <commit/file>  세션: <session>.3
-Duration: Xs  Cost: API 정액 (메인 동일)
+Target: <commit/file>  Session: <session>.3
+Duration: Xs  Cost: API flat rate (same as main)
 ```
 
-**synthesis recommendation (REQUIRED)** — verbatim 출력 후 반드시 1줄:
+**synthesis recommendation (REQUIRED)** — after the verbatim output, always 1 line:
 ```
-Recommendation: <액션> because <가장 actionable한 발견을 구체적으로 명시한 이유>
+Recommendation: <action> because <concretely state the reason, naming the most actionable finding>
 ```
 
-### 2A-6: cross-model 비교 (선택적)
+### 2A-6: cross-model comparison (optional)
 
-이번 세션에서 `/codex review`, `/hih-glm review`, `/review` 중 하나 이상이 이미 실행된 경우 N-way 비교:
+If one or more of `/codex review`, `/hih-glm review`, `/review` has already run in this session, do an N-way comparison:
 
 ```
-## N-WAY 크로스 모델 분석
+## N-WAY cross-model analysis
 ┌────────────────────────────────────────────────────────────┐
-│ 모델              │ GATE      │ 발견 수 │ 고유 발견           │
-│ Claude /review    │ PASS/FAIL │ N건     │ {메인 Claude 고유}  │
-│ /codex            │ PASS/FAIL │ N건     │ {Codex 고유}        │
-│ /hih-glm          │ PASS/FAIL │ N건     │ {GLM 고유}          │
-│ /hih-claude (fresh) │ PASS/FAIL │ N건   │ {fresh Opus 고유}   │
+│ Model             │ GATE      │ Findings│ Unique findings     │
+│ Claude /review    │ PASS/FAIL │ N       │ {main Claude unique}│
+│ /codex            │ PASS/FAIL │ N       │ {Codex unique}      │
+│ /hih-glm          │ PASS/FAIL │ N       │ {GLM unique}        │
+│ /hih-claude (fresh) │ PASS/FAIL │ N     │ {fresh Opus unique} │
 └────────────────────────────────────────────────────────────┘
-모두 동의: {N개 모두 지적한 발견} ← 최우선 수정
-2개 이상: {2개 이상 지적한 발견}
-합의율: X%
+All agree: {findings flagged by all N} ← top priority to fix
+2 or more: {findings flagged by 2 or more}
+Agreement rate: X%
 
-종합 권고: <모든 모델 분석 기반 최종 액션>
+Overall recommendation: <final action based on all model analyses>
 ```
 
-## Step 2B: challenge 모드
+## Step 2B: challenge mode
 
-2A와 동일 구조. prompt만 적대적:
+Same structure as 2A. Only the prompt is adversarial:
 
 ```
-[적대적 검증] 이 코드가 PROD에서 깨질 시나리오를 찾는다.
-- 엣지 케이스 (빈 입력, 거대 입력, 동시성)
-- 실패 모드 (네트워크/권한/디스크/lock)
-- 보안 (인젝션, 권한 우회, 시크릿, 경합)
-- 회귀
-- silent 데이터 손상
+[Adversarial verification] Find scenarios where this code breaks in PROD.
+- Edge cases (empty input, huge input, concurrency)
+- Failure modes (network/permissions/disk/lock)
+- Security (injection, privilege bypass, secrets, races)
+- Regression
+- Silent data corruption
 
-칭찬 X. 문제만. 거짓 시나리오는 X — 검증 가능한 것만.
+No praise. Problems only. No false scenarios — only verifiable ones.
 
-출력:
-## 깨질 시나리오 (재현 단계 포함)
-## 가능성 등급 (높음/중간/낮음)
-## 권고 픽스 (1줄씩)
+Output:
+## Scenarios that break (with reproduction steps)
+## Likelihood grade (높음/중간/낮음 = high/medium/low)
+## Recommended fixes (1 line each)
 ```
 
-GATE: "높음" 등급 1+건 → FAIL, 그 외 → PASS.
+GATE: 1+ "높음" (high) grade → FAIL, otherwise → PASS.
 
-출력 형식:
+Output format:
 ```
 Claude Opus 4.7 SAYS (challenge):
 ═══════════════════════════════════════════════
-<응답 풀버전>
+<full response>
 ═══════════════════════════════════════════════
 GATE: PASS|FAIL
 ```
 
 **synthesis recommendation (REQUIRED)**:
 ```
-Recommendation: <액션> because <blast radius 기준 가장 위험한 시나리오 명시>
+Recommendation: <action> because <name the most dangerous scenario by blast radius>
 ```
 
-## Step 2C: consult 모드
+## Step 2C: consult mode
 
-prompt = filesystem boundary + 사용자 질문 그대로.
+prompt = filesystem boundary + the user's question verbatim.
 
-세션 연속성 X (단발). 후속은 사용자가 다시 호출.
+No session continuity (one-shot). For follow-ups, the user invokes again.
 
-GATE 판정 X — 출력만 verbatim.
+No GATE determination — output only, verbatim.
 
-출력 형식:
+Output format:
 ```
 Claude Opus 4.7 SAYS (consult):
 ═══════════════════════════════════════════════
-<응답 풀버전>
+<full response>
 ═══════════════════════════════════════════════
-Cost: API 정액
+Cost: API flat rate
 ```
 
 **synthesis recommendation (REQUIRED)**:
 ```
-Recommendation: <액션> because <가장 actionable한 fresh-Claude 인사이트 명시>
+Recommendation: <action> because <name the most actionable fresh-Claude insight>
 ```
 
-## 호출자 pane 매핑 — 자동 + 오버라이드
+## Caller pane mapping — auto + override
 
 ```bash
-# 우선순위: --session 인자 > $HIH_CLAUDE_SESSION > project-manager→PM 변환 > basename(pwd)
+# Priority: --session arg > $HIH_CLAUDE_SESSION > project-manager→PM conversion > basename(pwd)
 SESSION="${ARG_SESSION:-${HIH_CLAUDE_SESSION:-$(basename $(pwd))}}"
 [ "$SESSION" = "project-manager" ] && SESSION="PM"
 ```
 
-## 에러 처리
+## Error handling
 
-| 케이스 | 처리 |
+| Case | Handling |
 |---|---|
-| claude CLI 없음 | "claude CLI 설치 필요" |
-| tmux 세션 없음 | 에러 + 생성 명령 안내 (자동 생성 X) |
-| pane 3 없음 | **자동 생성** (`tmux split-window -h`) + `claude --model claude-opus-4-7` 자동 시작 |
-| pane 3가 다른 모델 | 경고 + 그래도 진행 (Opus 4.7 권장 메시지) |
-| pane 3가 Claude 아님 | 경고 + 그래도 진행 |
-| idle 10분 timeout | 강제 capture + "Claude 무응답 — pane 직접 확인" |
-| 빈 응답 | "Claude 응답 비어있음 — pane 직접 확인" |
-| pane 3 이미 다른 작업 점유 | 경고 + 사용자에게 빈 pane 직접 명시 요청 (`HIH_CLAUDE_SESSION` 또는 `--session`) |
+| claude CLI missing | "claude CLI 설치 필요 (claude CLI installation required)" |
+| tmux session missing | Error + creation command guidance (no auto-creation) |
+| pane 3 missing | **Auto-create** (`tmux split-window -h`) + auto-start `claude --model claude-opus-4-7` |
+| pane 3 is a different model | Warn + proceed anyway (Opus 4.7 recommended message) |
+| pane 3 is not Claude | Warn + proceed anyway |
+| idle 10-min timeout | Force capture + "Claude 무응답 — pane 직접 확인 (Claude unresponsive — check the pane directly)" |
+| empty response | "Claude 응답 비어있음 — pane 직접 확인 (Claude response empty — check the pane directly)" |
+| pane 3 already occupied by another task | Warn + ask the user to explicitly specify an empty pane (`HIH_CLAUDE_SESSION` or `--session`) |
 
-## 사용 예
+## Usage examples
 
 ```bash
-# 최근 commit 리뷰 (cwd가 insung_blog)
+# Review the latest commit (cwd is insung_blog)
 /hih-claude review HEAD
 
-# 특정 commit + focus
+# Specific commit + focus
 /hih-claude review 91046ab 보안
 
-# 적대적 검증
+# Adversarial verification
 /hih-claude challenge scripts/token_guard.py 동시성
 
-# 자유 질의
+# Free-form query
 /hih-claude consult "이 아키텍처 결정의 hidden cost는?"
 
-# 세션 명시 (예: hermes에서 PM 세션 호출)
+# Specify session (e.g., call the PM session from hermes)
 HIH_CLAUDE_SESSION=PM /hih-claude consult "..."
 ```
 
-## 핵심 원칙
+## Core principles
 
-1. **응답은 verbatim** — 자르거나 요약 X.
-2. **메인 PM이 사실 검증 백스톱** — fresh Claude가 거짓 우려 던지면 grep/검증 후 사용자 보고.
-3. **Opus 4.7 default** — 단일 모델, 헷갈림 회피.
-4. **단발** — 세션 연속 X. 후속은 다시 호출 (이전 컨텍스트 prompt에 박아서).
-5. **headless 호출 금지** — OAuth 토큰 외부 전파 위험. pane TUI만.
-6. **/hih-glm 우선** — 일반 리뷰는 Z.ai Pro 정액으로 $0. /hih-claude는 메인 동일 등급 의견이 필요할 때만 (예: critical 결정, /hih-glm + /codex 의견 충돌 시 tiebreaker).
+1. **Response is verbatim** — do NOT truncate or summarize.
+2. **Main PM is the fact-check backstop** — if fresh Claude throws a false concern, grep/verify before reporting to the user.
+3. **Opus 4.7 default** — single model, avoid confusion.
+4. **One-shot** — no session continuity. Follow-ups are re-invoked (embedding the prior context in the prompt).
+5. **No headless invocation** — risk of OAuth token external propagation. pane TUI only.
+6. **Prefer /hih-glm** — general reviews are $0 on the Z.ai Pro flat rate. Use /hih-claude only when you need an opinion at the same tier as the main (e.g., critical decisions, tiebreaker when /hih-glm + /codex opinions conflict).
 
-## 임시 파일 청소
+## Temp file cleanup
 
 ```bash
 find /tmp -maxdepth 1 -name "hih_claude_*" -mtime +7 -delete 2>/dev/null
 ```
 
-## 검증 사례 (2026-05-21)
+## Verification case (2026-05-21)
 
-첫 테스트 — `consult` 모드 격리 세션(`hih-test`) 실측:
+First test — measured in an isolated `consult`-mode session (`hih-test`):
 
-- 세션 자동 생성 + pane 3 split 정상 (`tmux split-window -h` 2회)
-- `claude --model claude-opus-4-7` 부팅 25초 ⏱️ (Claude Code v2.1.146 / "Opus 4.7 with xhigh effort" / Claude Max OAuth)
-- prompt paste-buffer → Enter → idle 폴링: **총 ~40초**에 응답 완료, idle 마커 "Churned for 8s" 감지
-- 응답 capture verbatim 추출 성공 (3줄 답변, ctx:94%까지 점유)
-- 메인 PM(`PM:1.1`) 컨텍스트와 격리 확인 — 별도 OAuth 토큰 누출 없음 (TUI 부팅이라 정상)
+- Session auto-creation + pane 3 split worked (`tmux split-window -h` x2)
+- `claude --model claude-opus-4-7` boot took 25s ⏱️ (Claude Code v2.1.146 / "Opus 4.7 with xhigh effort" / Claude Max OAuth)
+- prompt paste-buffer → Enter → idle polling: response completed in **~40s total**, idle marker "Churned for 8s" detected
+- Response capture verbatim extraction succeeded (3-line answer, occupied up to ctx:94%)
+- Confirmed isolation from the main PM (`PM:1.1`) context — no separate OAuth token leak (normal since it is a TUI boot)
 
-결론: /hih-glm과 동일 패턴으로 정상 동작. headless 우회 위험 없이 fresh Opus 4.7 의견 가능.
-첫 호출 시 부팅 25초 오버헤드는 감수해야 함 (이후 호출은 같은 pane 재사용).
+Conclusion: works correctly with the same pattern as /hih-glm. A fresh Opus 4.7 opinion is possible without the headless-bypass risk.
+The 25s boot overhead on first invocation must be accepted (subsequent invocations reuse the same pane).

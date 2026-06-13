@@ -1,3 +1,5 @@
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (ko_KR.UTF-8)
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (ko_KR.UTF-8)
 ---
 name: investigate
 preamble-tier: 2
@@ -25,18 +27,6 @@ triggers:
   - why is this broken
   - root cause analysis
   - investigate this error
-hooks:
-  PreToolUse:
-    - matcher: "Edit"
-      hooks:
-        - type: command
-          command: "bash ${CLAUDE_SKILL_DIR}/../freeze/bin/check-freeze.sh"
-          statusMessage: "Checking debug scope boundary..."
-    - matcher: "Write"
-      hooks:
-        - type: command
-          command: "bash ${CLAUDE_SKILL_DIR}/../freeze/bin/check-freeze.sh"
-          statusMessage: "Checking debug scope boundary..."
 gbrain:
   schema: 1
   context_queries:
@@ -871,27 +861,9 @@ If any learnings come back, name which one applies to your investigation in one 
 
 ## Scope Lock
 
-After forming your root cause hypothesis, lock edits to the affected module to prevent scope creep.
+After forming your root cause hypothesis, identify the narrowest directory containing the affected files. Mentally scope your edits to that directory to prevent scope creep. If the bug spans the entire repo or the scope is genuinely unclear, skip the lock and note why.
 
-```bash
-[ -x "${CLAUDE_SKILL_DIR}/../freeze/bin/check-freeze.sh" ] && echo "FREEZE_AVAILABLE" || echo "FREEZE_UNAVAILABLE"
-```
-
-**If FREEZE_AVAILABLE:** Identify the narrowest directory containing the affected files. Write it to the freeze state file:
-
-```bash
-eval "$(~/.claude/skills/gstack/bin/gstack-paths)"
-STATE_DIR="$GSTACK_STATE_ROOT"
-mkdir -p "$STATE_DIR"
-echo "<detected-directory>/" > "$STATE_DIR/freeze-dir.txt"
-echo "Debug scope locked to: <detected-directory>/"
-```
-
-Substitute `<detected-directory>` with the actual directory path (e.g., `src/auth/`). Tell the user: "Edits restricted to `<dir>/` for this debug session. This prevents changes to unrelated code. Run `/unfreeze` to remove the restriction."
-
-If the bug spans the entire repo or the scope is genuinely unclear, skip the lock and note why.
-
-**If FREEZE_UNAVAILABLE:** Skip scope lock. Edits are unrestricted.
+**Tip:** If you want to enforce edit boundaries during the debug session, consider running `/freeze` to restrict edits to the affected module. This is optional — edits are unrestricted by default.
 
 ---
 
