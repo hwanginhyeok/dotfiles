@@ -1,86 +1,86 @@
-# 개인사업자 절세 전략
+# Sole Proprietor Tax-Saving Strategies
 
-> SKILL STEP 6에서 사용. **절세 ≠ 탈세.** 합법적 비용 인정·공제·감면·구조설계만 다룬다.
-> 가공경비·허위증빙·매출누락은 절대 안내 금지(조세범처벌 + 가산세 40%).
-> 제안은 ⓐ 올해 신고 반영 / ⓑ 내년 대비 세팅 으로 나눠 제시.
+> Used in SKILL STEP 6. **Tax saving ≠ tax evasion.** Only covers legitimate expense recognition, deductions, exemptions, and structural design.
+> Never advise on padded/fabricated expenses, false documentation, or sales omission (Punishment of Tax Offenses Act + 40% penalty tax).
+> Present proposals split into ⓐ applied to this year's filing / ⓑ setup for next year.
 
-> 세율(2025 귀속): 1,400만↓ 6% / ~5,000만 15%(누진126만) / ~8,800만 24%(576만) / ~1.5억 35%(1,544만) / ~3억 38%(1,994만) / ~5억 40%(2,594만) / ~10억 42%(3,594만) / 10억↑ 45%(6,594만)
-> → 한계세율을 알아야 "이 공제 1만원이 세금 몇 원 줄이나" 판단 가능. (지방세 10% 별도 추가)
+> Tax rates (2025 attribution year): under 14M won 6% / ~50M 15% (progressive deduction 1.26M) / ~88M 24% (5.76M) / ~150M 35% (15.44M) / ~300M 38% (19.94M) / ~500M 40% (25.94M) / ~1B 42% (35.94M) / over 1B 45% (65.94M)
+> → You must know the marginal rate to judge "how many won of tax does this 10,000-won deduction reduce." (Local income tax of an additional 10% applies separately)
 
 ---
 
-## 1. 경비 극대화 (가장 큰 레버)
+## 1. Maximize Expenses (the biggest lever)
 
-소득금액 = 매출 − **경비**. 경비를 1원 늘리면 한계세율 × (1+지방세10%) 만큼 세금 감소.
+Income amount = sales − **expenses**. Increasing expenses by 1 won reduces tax by marginal rate × (1 + local tax 10%).
 
-- **사업용 신용카드·계좌 홈택스 등록** → 누락 없이 자동 집계. (미등록 = 경비 새어나감)
-- **3만원 초과 지출은 적격증빙**(세금계산서/카드/현금영수증). 없으면 증빙불비가산세 2%지만 경비 자체는 인정될 수 있음 — 단 입증책임 본인.
-- 흔히 빠뜨리는 경비: 통신비, 차량유지비(업무비율), 사업장 공과금, 소프트웨어 구독, 교육·도서, 업무 관련 식대·접대비(한도 내), 이자비용(사업대출), 감가상각(장비·비품).
-- **감가상각**: 고가 자산은 즉시 전액이 아닌 내용연수 상각. 소액(거래단위 100만원 이하)은 즉시 비용. 중소기업 즉시상각 특례 확인.
-- **인건비**: 직원·가족(실제 근무 시) 급여는 경비. 단 **원천징수·지급명세서 신고 필수**(안 하면 부인).
+- **Register business credit cards/accounts with Hometax** → automatically aggregated with no omissions. (Not registering = expenses leaking away)
+- **Spending over 30,000 won requires qualified documentation** (tax invoice/card/cash receipt). Without it there's a 2% documentation-deficiency penalty tax, but the expense itself may still be recognized — though the burden of proof is on you.
+- Commonly missed expenses: communication costs, vehicle maintenance (business-use ratio), business premises utilities, software subscriptions, education/books, business-related meals/entertainment expenses (within limits), interest costs (business loans), depreciation (equipment/fixtures).
+- **Depreciation**: high-value assets are not fully expensed immediately but depreciated over their useful life. Small amounts (1M won or less per transaction unit) are expensed immediately. Check the SME immediate-depreciation special provision.
+- **Labor costs**: salaries for employees/family (when actually working) are expenses. However, **withholding tax and payment statement filing are required** (denied if not done).
 
-## 2. 장부 vs 추계 유불리
+## 2. Bookkeeping vs Estimation, Which Is Favorable
 
-- **복식부기/간편장부 작성** → 실제 경비 전액 + 결손금 이월(10~15년). 적자면 세금 0 + 환급.
-- 간편장부 대상이 **복식부기**로 신고 → 기장세액공제 20%(최대 100만원).
-- 복식부기 의무자가 추계 → 무기장가산세 20%. 반드시 장부.
-- 단순경비율 대상 소규모는 추계가 더 유리할 수 있음 → **양쪽 계산해 비교**.
+- **Keep double-entry/simplified books** → full actual expenses + loss carryforward (10–15 years). If in deficit, tax is 0 + refund.
+- A simplified-bookkeeping target filing with **double-entry** → bookkeeping tax credit of 20% (max 1M won).
+- A double-entry-obligated party using estimation → 20% no-bookkeeping penalty tax. Always keep books.
+- For small-scale targets eligible for the simple expense rate, estimation may be more favorable → **calculate both and compare**.
 
-## 3. 소득공제 (과세표준 자체를 줄임)
+## 3. Income Deductions (reduce the tax base itself)
 
-| 공제 | 한도/내용 |
+| Deduction | Limit/Details |
 |------|----------|
-| 인적공제 | 본인·부양가족 1인당 150만원 (+경로·장애 추가) |
-| 국민연금 | 납입액 **전액** 소득공제 |
-| **노란우산공제** | 사업소득 4천만↓ **600만원**(2025 상향) / 4천만~1억 400만 / 1억↑ 200만. 폐업·노후 대비 + 압류 보호 |
-| 주택청약·기타 | 요건 시 |
+| Personal deduction | 1.5M won per person for self/dependents (+ additional for elderly/disabled) |
+| National Pension | **full** premium amount deductible from income |
+| **Noranusan (Yellow Umbrella) Mutual Aid** | business income under 40M won → **6M won** (raised in 2025) / 40M–100M → 4M / over 100M → 2M. Closure/retirement preparation + seizure protection |
+| Housing subscription/other | when requirements are met |
 
-## 4. 세액공제·감면 (세금에서 직접 차감 — 효과 큼)
+## 4. Tax Credits/Exemptions (deducted directly from tax — large effect)
 
-| 항목 | 내용 |
+| Item | Details |
 |------|------|
-| **연금계좌세액공제** | 연금저축+IRP 합산 900만원 한도, 12~15% 공제(총급여/종합소득 기준). 노란우산과 **중복 가능** |
-| **창업중소기업 세액감면** | 청년(15~34세) 수도권밖 창업 등 5년간 50~100% 감면. 업종·지역 요건 |
-| **중소기업특별세액감면** | 업종·지역·규모별 5~30% 감면 |
-| **통합투자세액공제** | 기계·설비 투자액의 일정% |
-| **고용증대·통합고용 세액공제** | 상시근로자 증가 시 1인당 수백만원, 수년간 |
-| **전자신고세액공제** | 종소세 2만 / 부가세 1만 |
-| **자녀세액공제·기부금세액공제** | 요건별 |
+| **Pension account tax credit** | combined pension savings + IRP limit 9M won, 12–15% credit (based on total salary/global income). **Can be combined** with Noranusan |
+| **Startup SME tax exemption** | 50–100% exemption for 5 years for youth (15–34) startups outside the metropolitan area, etc. Industry/region requirements |
+| **SME special tax exemption** | 5–30% exemption by industry/region/scale |
+| **Integrated investment tax credit** | a certain % of machinery/equipment investment |
+| **Employment increase/integrated employment tax credit** | when full-time employees increase, several million won per person, over several years |
+| **Electronic filing tax credit** | global income tax 20,000 / VAT 10,000 |
+| **Child tax credit/donation tax credit** | by requirement |
 
-> 감면은 **요건 충족 입증**이 핵심. 창업감면·고용공제는 놓치는 경우 많음 → 적극 확인.
+> For exemptions, **proving the requirements are met** is key. Startup exemptions and employment credits are often missed → check actively.
 
-## 5. 부가세 절세
+## 5. VAT Tax Saving
 
-- 매입세액공제 누락 방지(사업용 카드·세금계산서).
-- **의제매입세액공제**: 음식점·제조 등 면세 농수축산물 매입분 부가세 공제.
-- **신용카드매출전표 발행세액공제**: 최종소비자 대상 소매·음식·숙박·서비스 등. 발급액의 **1.3%**, **연 1,000만원 한도**(2026.12.31까지). 법인·직전매출 10억 초과 개인 제외. ⚠️ **전자상거래·통신판매(오픈마켓/PG 결제)는 대상 제외 소지** — 직접 발행분만 인정될 수 있어 홈택스/세무사 확인 필요. (검증 2026-05-31)
-- 간이→일반 전환 시 **재고매입세액공제**.
-- 일반↔간이 유형 선택: 매입세액 많으면 일반이 유리할 수 있음(환급).
+- Prevent omission of input tax deductions (business cards/tax invoices).
+- **Deemed input tax credit**: VAT credit on tax-exempt agricultural/marine/livestock product purchases for restaurants/manufacturing, etc.
+- **Credit card sales slip issuance tax credit**: for retail/food/lodging/services, etc. targeting final consumers. **1.3%** of the issued amount, **annual limit 10M won** (until 2026-12-31). Excludes corporations and individuals with prior-year sales over 1B won. ⚠️ **E-commerce/mail order (open market/PG payments) may be excluded** — only directly issued portions may be recognized, so check with Hometax/a tax accountant. (Verified 2026-05-31)
+- **Inventory input tax credit** on converting from simplified to general.
+- Choosing general↔simplified type: if input tax is large, general may be more favorable (refund).
 
-## 6. 구조적 절세 (내년 대비 ⓑ)
+## 6. Structural Tax Saving (preparing for next year ⓑ)
 
-- **소득 분산**: 공동사업(가족 등 실제 참여) → 누진세율 분산. 단 형식상 분산은 부인.
-- **법인 전환 검토**: 소득 1.5억~ 구간 지속 시 법인세율(9~24%)이 종소세 한계세율보다 낮아 유리해지는 분기점. 4대보험·관리비용·대표 급여/배당 설계 종합 판단 → 세무사 상담.
-- **노란우산·연금계좌 정기납입 습관화**: 매년 공제.
-- **성실신고/복식부기 사전 대비**: 매출 성장 시 장부·증빙 체계 미리.
-- **사업용/개인용 분리**: 계좌·카드 분리로 경비 입증력↑, 세무조사 리스크↓.
+- **Income splitting**: joint business (family etc. actually participating) → distributes the progressive rate. But formal-only splitting is denied.
+- **Review corporate conversion**: when continuously in the 150M won+ income range, the corporate tax rate (9–24%) becomes lower than the global income tax marginal rate, making it a favorable tipping point. Comprehensive judgment of 4 major insurances/management costs/representative salary/dividend design → consult a tax accountant.
+- **Habituate regular Noranusan/pension account payments**: deduction every year.
+- **Prepare in advance for honest filing/double-entry bookkeeping**: set up bookkeeping/documentation systems early as sales grow.
+- **Separate business/personal**: separating accounts/cards increases expense provability↑ and reduces tax audit risk↓.
 
-## 7. 가산세 = 마이너스 절세 (피하는 것도 절세)
+## 7. Penalty Tax = Negative Tax Saving (avoiding it is also tax saving)
 
-| 가산세 | 율 |
+| Penalty Tax | Rate |
 |--------|-----|
-| 무신고 | 20% (부정 40%) |
-| 과소신고 | 10% (부정 40%) |
-| 납부지연 | 일 0.022% (연 약 8%) |
-| 증빙불비 | 적격증빙 미수취 2% |
-| 지급명세서 미제출 | 1% (지연 0.5%) |
-| 무기장(복식부기의무) | 20% |
+| Non-filing | 20% (fraudulent 40%) |
+| Under-reporting | 10% (fraudulent 40%) |
+| Late payment | 0.022% per day (about 8% per year) |
+| Documentation deficiency | 2% for not obtaining qualified documentation |
+| Payment statement non-submission | 1% (delayed 0.5%) |
+| No bookkeeping (double-entry obligated) | 20% |
 
-→ 기한 준수 + 증빙 + 지급명세서만 잘해도 수백만원 절약.
+→ Just keeping deadlines + documentation + payment statements well saves millions of won.
 
 ---
 
-## 절세 제안 출력 템플릿
+## Tax-Saving Proposal Output Template
 
 ```
 ## 절세 전략 — {업종}/{유형}, 추정 한계세율 {n}%

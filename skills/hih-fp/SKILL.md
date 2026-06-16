@@ -1,66 +1,66 @@
 ---
 name: hih-fp
-description: 제1원칙 + 머스크 5단계로 문제 해결. 가정을 깨고 근본에서 재구성.
+description: Solve problems with First Principles + Musk's 5 steps. Break assumptions and rebuild from fundamentals.
 user_invocable: true
 ---
 
 # /hih-fp
 
-제1원칙 사고 + 머스크 5단계 공학 프로세스로 문제를 해결한다.
-`~/.claude/rules/deep-fp.md`를 사고 프레임워크로 사용.
+Solve the problem using First Principles thinking + Musk's 5-step engineering process.
+Use `~/.claude/rules/deep-fp.md` as the thinking framework.
 
-## 실행 시 동작
+## Behavior when invoked
 
-### 1. 문제 수신
-사용자가 문제/태스크를 제시하면 바로 해결하지 않는다.
+### 1. Receive the problem
+When the user presents a problem/task, do not solve it immediately.
 
-### 2. 제1원칙 분석 (필수 출력)
+### 2. First Principles analysis (required output)
 ```
-## 제1원칙 분석
+## First Principles analysis
 
-### 가정 나열
-- 가정1: ...
-- 가정2: ...
-- 가정3: ...
+### List assumptions
+- Assumption 1: ...
+- Assumption 2: ...
+- Assumption 3: ...
 
-### 가정 검증
-- 가정1: ✅ 참 / ❌ 근거 없음 / ⚠️ 부분적
-- 가정2: ...
+### Verify assumptions
+- Assumption 1: ✅ true / ❌ no evidence / ⚠️ partial
+- Assumption 2: ...
 
-### 근본 진실
-- 진실1: (더 이상 분해 불가능한 사실)
-- 진실2: ...
-```
-
-### 3. 5단계 프로세스 적용 (필수 출력)
-```
-### Step 1: 요구사항 의문시
-- 이 요구사항은 누가 만들었나?
-- 정말 필요한가? 왜?
-
-### Step 2: 삭제
-- 제거할 수 있는 부분/프로세스는?
-- "이것 없이 해결 가능한가?"
-
-### Step 3: 단순화
-- 남은 것을 어떻게 단순화?
-
-### Step 4: 가속화
-- 사이클 타임을 어떻게 줄일 수 있나?
-
-### Step 5: 자동화
-- 반복적인 것을 어떻게 자동화?
+### Fundamental truths
+- Truth 1: (a fact that can no longer be decomposed)
+- Truth 2: ...
 ```
 
-### 4. 재구성
-근본 진실 + 5단계 결과를 기반으로 솔루션 설계.
+### 3. Apply the 5-step process (required output)
+```
+### Step 1: Question the requirements
+- Who created this requirement?
+- Is it really necessary? Why?
 
-### 5. 검증
-프로토타입/테스트로 확인. 실패하면 가정 재점검.
+### Step 2: Delete
+- What parts/processes can be removed?
+- "Can this be solved without it?"
 
-## 트리거
-- "제1원칙으로 생각해봐"
+### Step 3: Simplify
+- How can what remains be simplified?
+
+### Step 4: Accelerate
+- How can the cycle time be reduced?
+
+### Step 5: Automate
+- How can the repetitive parts be automated?
+```
+
+### 4. Rebuild
+Design the solution based on the fundamental truths + the results of the 5 steps.
+
+### 5. Verify
+Confirm via prototype/test. If it fails, re-examine the assumptions.
+
+## Triggers
+- "Think about it from first principles"
 - "/deep-fp"
-- "이거 왜 이렇게 하고 있지?"
-- 기존 방식에 의문이 들 때
-- 비용/성능/복잡도 문제
+- "Why are we doing it this way?"
+- When you have doubts about the existing approach
+- Cost/performance/complexity problems

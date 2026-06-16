@@ -1,20 +1,20 @@
 ---
 name: hih-ontology
-description: 온톨로지적 사고로 문제를 구조화. 개체/속성/관계/제약/계층을 먼저 정의한 후 해결.
+description: Structure a problem with ontological thinking. Define entities/properties/relations/constraints/hierarchy first, then solve.
 user_invocable: true
 ---
 
 # /hih-ontology
 
-문제를 온톨로지적으로 분해한 후 해결한다.
-`~/.claude/rules/deep-ontology.md`를 사고 프레임워크로 사용.
+Decompose the problem ontologically, then solve it.
+Use `~/.claude/rules/deep-ontology.md` as the thinking framework.
 
-## 실행 시 동작
+## Behavior when run
 
-### 1. 문제 수신
-사용자가 문제/태스크를 제시하면 바로 코딩하지 않는다.
+### 1. Receive the problem
+When the user presents a problem/task, do not jump straight to coding.
 
-### 2. 온톨로지 분석 (필수 출력)
+### 2. Ontology analysis (required output)
 ```
 ## 온톨로지 분석
 
@@ -37,16 +37,16 @@ user_invocable: true
 - 상위 범주 > 하위 범주
 ```
 
-### 3. 구조 검증
-- "빠진 개체가 있는가?"
-- "관계가 누락되거나 순환하지 않는가?"
-- "제약조건이 상충하지 않는가?"
+### 3. Structure validation
+- "Is any entity missing?"
+- "Are any relations missing or circular?"
+- "Do any constraints conflict?"
 
-### 4. 구현
-온톨로지 구조를 기반으로 코드/설계 진행.
+### 4. Implementation
+Proceed with code/design based on the ontology structure.
 
-## 트리거
+## Triggers
 - "이 문제 온톨로지로 분석해줘"
 - "/deep-ontology"
-- 복잡한 도메인 모델링 문제
-- 개체 간 관계가 복잡한 설계
+- Complex domain-modeling problems
+- Designs with complex relations between entities

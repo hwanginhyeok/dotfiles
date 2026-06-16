@@ -1,0 +1,5 @@
+[
+  {"key": "ctrl+k ctrl+t", "command": "chat.submit", "args": {"text": "/tasks"}},
+  {"key": "ctrl+k ctrl+s", "command": "chat.submit", "args": {"text": "/sync-all"}},
+  {"key": "ctrl+k ctrl+o", "command": "chat.submit", "args": {"text": "/overnight"}}
+]

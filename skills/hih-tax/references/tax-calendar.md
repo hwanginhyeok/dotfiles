@@ -1,50 +1,50 @@
-# 연간 세무 캘린더 (개인사업자)
+# Annual Tax Calendar (Sole Proprietor)
 
-> SKILL STEP 3에서 사용. 사업자 유형에 맞는 일정만 골라 "가장 가까운 마감 우선"으로 정렬해 제시.
-> 마감 = 가산세 분기점. 놓치면 무신고/납부지연 가산세.
+> Used in SKILL STEP 3. Pick only the schedule matching the business type and present it sorted "nearest deadline first".
+> Deadline = penalty-tax trigger point. Miss it and you incur non-filing / late-payment penalty taxes.
 
 ---
 
-## 월별 일정
+## Monthly Schedule
 
-| 시기 | 신고/납부 | 대상 |
+| Timing | Filing/Payment | Applies to |
 |------|----------|------|
-| **1/25** | 부가세 2기 확정(일반) / 간이과세 연 신고 | 모든 부가세 사업자 |
-| **1/31** | 면세사업자 사업장현황신고 마감 임박 / 간이지급명세서(반기) | |
-| **2/10** | **사업장현황신고** | 면세사업자 |
-| **2월 말~3/10** | 지급명세서(근로·사업·기타소득) 제출 | 인건비 지급 사업자 |
-| **3월** | 연말정산 환급 등 | (직원 있을 시) |
-| **4/25** | 부가세 1기 예정신고/예정고지 납부 | 일반과세자(개인은 고지) |
-| **5/1~5/31** | **종합소득세 + 지방소득세 신고·납부** | **모든 개인사업자** |
-| **6/30** | 종소세 성실신고확인 대상 신고 마감 | 성실신고확인대상자 |
-| **7/25** | 부가세 1기 확정신고 | 일반과세자 |
-| **7/31** | 간이지급명세서(반기) | |
-| **8/31** | 종소세 중간예납 고지 납부(11월) 준비 | |
-| **10/25** | 부가세 2기 예정신고/예정고지 | 일반과세자(개인은 고지) |
-| **11/30** | **종합소득세 중간예납** 납부 | 전년 납부세액 기준 고지 |
-| **연중** | 원천세 — 보수 지급 다음달 10일(또는 반기 1·7월) | 직원·외주 있는 사업자 |
+| **1/25** | VAT 2nd-period final return (general) / Simplified-taxation annual return | All VAT-liable businesses |
+| **1/31** | Tax-exempt business — business-place status report deadline approaching / Simplified payment statement (half-yearly) | |
+| **2/10** | **Business-place status report** | Tax-exempt businesses |
+| **End of Feb – 3/10** | Submit payment statements (employment / business / other income) | Businesses paying labor costs |
+| **March** | Year-end tax settlement refunds, etc. | (If you have employees) |
+| **4/25** | VAT 1st-period interim return / interim-assessment payment | General taxpayers (individuals are assessed) |
+| **5/1–5/31** | **Comprehensive income tax + local income tax return·payment** | **All sole proprietors** |
+| **6/30** | Income tax filing deadline for those subject to good-faith filing verification | Good-faith-filing-verification subjects |
+| **7/25** | VAT 1st-period final return | General taxpayers |
+| **7/31** | Simplified payment statement (half-yearly) | |
+| **8/31** | Prepare for income tax interim-prepayment assessment (November) | |
+| **10/25** | VAT 2nd-period interim return / interim-assessment | General taxpayers (individuals are assessed) |
+| **11/30** | **Comprehensive income tax interim prepayment** | Assessed based on prior-year tax paid |
+| **Year-round** | Withholding tax — 10th of the month following remuneration payment (or half-yearly Jan·Jul) | Businesses with employees·outsourcing |
 
 ---
 
-## 유형별 "내 일정" 요약
+## "My Schedule" Summary by Type
 
-### 일반과세 + 종소세
-- 1/25 부가세 확정 → 5월 종소세 → 7/25 부가세 확정 → 11월 중간예납. (+4·10월 예정고지 납부)
+### General taxation + income tax
+- 1/25 VAT final → May income tax → 7/25 VAT final → November interim prepayment. (+ Apr·Oct interim-assessment payments)
 
-### 간이과세 + 종소세
-- 1/25 부가세(연1회) → 5월 종소세 → 11월 중간예납.
+### Simplified taxation + income tax
+- 1/25 VAT (once a year) → May income tax → November interim prepayment.
 
-### 면세사업자 + 종소세
-- 2/10 사업장현황신고 → 5월 종소세 → 11월 중간예납.
+### Tax-exempt business + income tax
+- 2/10 business-place status report → May income tax → November interim prepayment.
 
-### 직원/프리랜서 고용 시 추가
-- 매월 10일(또는 반기 1·7월) 원천세 + 지급명세서 정기 제출.
+### Additional, if employing staff/freelancers
+- Regular submission of withholding tax + payment statements on the 10th of each month (or half-yearly Jan·Jul).
 
 ---
 
-## 놓쳤을 때
-- **기한후신고**: 가능. 무신고가산세(20%) + 납부지연(일 0.022%). 빨리 할수록 감면.
-- **수정신고**: 적게 신고 → 가산세 경감(법정기한 후 기간별 차등).
-- **경정청구**: 많이 냄 → 5년 내 환급 청구.
+## When You Miss It
+- **Late filing**: Possible. Non-filing penalty (20%) + late-payment penalty (0.022%/day). The sooner you do it, the greater the reduction.
+- **Amended return**: Under-reported → penalty reduction (graduated by period after the statutory deadline).
+- **Claim for correction (refund claim)**: Overpaid → claim refund within 5 years.
 
-> 출력 시: 오늘 날짜(`date`) 기준 D-day 계산해서 가장 임박한 마감 강조.
+> When outputting: compute the D-day based on today's date (`date`) and highlight the most imminent deadline.

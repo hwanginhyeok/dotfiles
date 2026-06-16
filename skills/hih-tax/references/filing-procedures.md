@@ -1,94 +1,94 @@
-# 세무신고 절차 (홈택스 기준)
+# Tax Filing Procedures (Hometax-based)
 
-> SKILL STEP 5에서 사용. 해당 신고만 골라 단계별로 안내.
-> 모든 신고는 [홈택스](https://hometax.go.kr) 또는 손택스(모바일) 전자신고가 기본. 세무대리인 위임도 가능.
-
----
-
-## A. 종합소득세 (개인사업자 핵심) — 5/1~5/31
-
-### 신고 방식 3갈래
-1. **모두채움 신고** — 단순경비율 대상 소규모. 국세청이 다 채워줌 → 확인·전송만. ARS(1544-9944)도 가능.
-2. **일반(자기조정) 신고** — 간편장부/직접 작성.
-3. **세무대리인 신고** — 복식부기·성실신고는 사실상 필수.
-
-### 단계 (홈택스 전자신고)
-```
-1. 홈택스 로그인 (공동인증서/금융인증서/간편인증)
-2. [세금신고 > 종합소득세 신고] 진입
-3. 신고 유형 선택:
-   - 모두채움 / 일반신고(추계-단순) / 일반신고(추계-기준) / 간편장부 / 복식부기
-4. 기본정보 → 소득종류 선택 (사업소득 등)
-5. 사업장 수입금액 입력/확인 (자동 불러오기 검토)
-6. 경비 입력:
-   - 장부신고: 간편장부/재무제표 기준 실제 경비
-   - 추계신고: 경비율 자동 적용 (단순/기준)
-7. 소득공제 입력 (인적·연금·노란우산 등)
-8. 세액공제·감면 입력 (전자신고·자녀·연금계좌·고용·통합투자 등)
-9. 기납부세액 입력 (원천징수 3.3%, 중간예납)
-10. 세액 확인 → 납부할 세액 또는 환급액 확정
-11. 신고서 제출 → 접수증 확인
-12. 납부: 계좌이체/카드/가상계좌. 분납(1천만원 초과분, 납부기한 후 2개월) 가능
-    환급: 환급계좌 등록 (보통 6~7월 지급)
-```
-
-### 장부 vs 추계 선택 (절세 분기점)
-- 실제 경비 > 경비율 추정경비 → **장부신고 유리** (특히 초기투자·고비용 업종)
-- 실제 경비 적고 매출 소규모 → **단순경비율 추계 유리**
-- 복식부기 의무자가 추계신고 시 → **무기장가산세 20%** + 불이익. 장부 필수.
-- 간편장부 대상이 복식부기로 하면 → **기장세액공제 20%(최대 100만원)**.
-
-### 지방소득세
-- 종소세의 10% 별도. 위택스(wetax) 또는 홈택스 연계 신고. 동시 처리.
+> Used in SKILL STEP 5. Pick only the relevant filing and guide it step by step.
+> All filings are by default electronic filing via [Hometax](https://hometax.go.kr) or Sontax (mobile). Delegation to a tax agent is also possible.
 
 ---
 
-## B. 부가가치세
+## A. Comprehensive Income Tax (core for sole proprietors) — 5/1~5/31
 
-### 일반과세자
-| 신고 | 기간 | 대상 |
+### 3 filing methods
+1. **Pre-filled (모두채움) filing** — for small-scale businesses subject to the simplified expense rate. The NTS fills everything in → just confirm and submit. ARS (1544-9944) is also available.
+2. **General (self-adjustment) filing** — simple bookkeeping / direct preparation.
+3. **Tax agent filing** — effectively required for double-entry bookkeeping and good-faith (성실신고) reporting.
+
+### Steps (Hometax electronic filing)
+```
+1. Log in to Hometax (joint certificate / financial certificate / simple authentication)
+2. Go to [Tax Filing > Comprehensive Income Tax Filing]
+3. Select filing type:
+   - Pre-filled / General filing (estimation-simplified) / General filing (estimation-standard) / Simple bookkeeping / Double-entry bookkeeping
+4. Basic info → select income type (business income, etc.)
+5. Enter/confirm business revenue amount (review the auto-loaded data)
+6. Enter expenses:
+   - Bookkeeping filing: actual expenses based on simple bookkeeping / financial statements
+   - Estimation filing: expense rate automatically applied (simplified/standard)
+7. Enter income deductions (personal, pension, Noran Umbrella, etc.)
+8. Enter tax credits/reductions (e-filing, children, pension account, employment, integrated investment, etc.)
+9. Enter prepaid tax (withholding 3.3%, interim prepayment)
+10. Confirm tax amount → finalize tax payable or refund amount
+11. Submit the return → confirm the receipt
+12. Payment: bank transfer / card / virtual account. Installment payment (for the portion over 10 million won, within 2 months after the payment due date) is possible
+    Refund: register a refund account (usually paid in June~July)
+```
+
+### Bookkeeping vs estimation choice (tax-saving decision point)
+- Actual expenses > estimated expenses by expense rate → **bookkeeping filing is advantageous** (especially for early-investment / high-cost industries)
+- Few actual expenses and small-scale revenue → **simplified expense rate estimation is advantageous**
+- If someone obligated to do double-entry bookkeeping files by estimation → **20% non-bookkeeping penalty tax** + disadvantages. Bookkeeping is required.
+- If someone subject to simple bookkeeping does double-entry → **20% bookkeeping tax credit (up to 1 million won)**.
+
+### Local Income Tax
+- Separate 10% of comprehensive income tax. File via Wetax (wetax) or Hometax linkage. Processed simultaneously.
+
+---
+
+## B. Value-Added Tax
+
+### General taxpayer
+| Filing | Period | Subject |
 |------|------|------|
-| 1기 예정 | 4/1~4/25 | 법인 위주(개인은 고지납부) |
-| 1기 확정 | 7/1~7/25 | 상반기(1~6월) |
-| 2기 예정 | 10/1~10/25 | 법인 위주 |
-| 2기 확정 | 1/1~1/25 | 하반기(7~12월) |
-> 개인 일반과세자는 보통 1·7월 **확정신고 2회**. 4·10월은 직전 절반 **예정고지**(고지서 납부).
+| 1st period preliminary | 4/1~4/25 | Mainly corporations (individuals get assessment-based payment) |
+| 1st period final | 7/1~7/25 | First half (Jan~Jun) |
+| 2nd period preliminary | 10/1~10/25 | Mainly corporations |
+| 2nd period final | 1/1~1/25 | Second half (Jul~Dec) |
+> Individual general taxpayers usually make **2 final filings** in Jan and Jul. In Apr and Oct, the previous half is **preliminarily assessed** (pay by assessment notice).
 
-### 간이과세자
-- **연 1회, 1/1~1/25** (직전연도분). 매출 × 업종부가율 × 10% − 공제.
-- 연매출 4,800만원 미만 → **납부면제**(신고는 함).
+### Simplified taxpayer
+- **Once a year, 1/1~1/25** (for the prior year). Revenue × industry value-added rate × 10% − deductions.
+- Annual revenue under 48 million won → **payment exemption** (still must file).
 
-### 단계 (홈택스)
+### Steps (Hometax)
 ```
-1. [세금신고 > 부가가치세 신고]
-2. 일반/간이 선택
-3. 매출 입력: 전자세금계산서·카드·현금영수증 자동 불러오기 + 현금매출 추가
-4. 매입 입력: 매입세금계산서·사업용카드·현금영수증 자동 불러오기
-5. 공제: 신용카드매출세액공제, 의제매입세액공제(음식점 등), 전자신고세액공제
-6. 납부세액 확정 → 제출 → 납부
+1. [Tax Filing > VAT Filing]
+2. Select general/simplified
+3. Enter sales: e-tax invoices, card, cash receipts auto-loaded + add cash sales
+4. Enter purchases: purchase tax invoices, business cards, cash receipts auto-loaded
+5. Deductions: credit card sales tax credit, deemed purchase tax credit (restaurants, etc.), e-filing tax credit
+6. Finalize tax payable → submit → pay
 ```
 
 ---
 
-## C. 원천세 (직원·프리랜서에게 보수 지급 시)
+## C. Withholding Tax (when paying compensation to employees / freelancers)
 
-- 급여·사업소득(프리랜서 3.3%)·기타소득 지급 시 **원천징수 → 다음달 10일까지 신고·납부**.
-- 반기납부 승인 시(상시 20인 이하) 1월·7월 10일 반기별.
-- 절차: [세금신고 > 원천세 신고] → 지급액·원천징수세액 입력 → 납부.
-- **지급명세서** 제출 별도(간이지급명세서 매월/반기, 연간 지급명세서 익년 2~3월). 미제출 가산세.
-
----
-
-## D. 사업장현황신고 (면세사업자) — 익년 2/10
-
-- 부가세 없는 면세사업자(병의원·학원 일부·농축수산 등)가 **수입금액·기본경비를 신고**.
-- [세금신고 > 사업장현황신고]. 이걸 해야 5월 종소세 자료 연계.
-- 미신고 시 가산세(의료업·수의업 등 일부 0.5%).
+- When paying salaries, business income (freelancer 3.3%), or other income, **withhold → file and pay by the 10th of the following month**.
+- If semi-annual payment is approved (20 or fewer regular employees), semi-annually on Jan 10 and Jul 10.
+- Procedure: [Tax Filing > Withholding Tax Filing] → enter payment amount and withheld tax amount → pay.
+- **Payment statements** are submitted separately (simplified payment statement monthly/semi-annually, annual payment statement in Feb~Mar of the following year). Non-submission incurs a penalty tax.
 
 ---
 
-## E. 공통 팁
-- **전자신고세액공제**: 납세자 직접 전자신고 시 종소세 2만원, 부가세 1만원 공제.
-- **수정신고 / 경정청구**: 과소신고 → 수정신고(가산세 경감), 과다납부 → 경정청구(5년 내 환급).
-- **기한후신고**: 마감 놓쳐도 가능하나 무신고가산세(20%, 부정 40%) + 납부지연가산세(일 0.022%).
-- 마감일 임박엔 홈택스 트래픽 폭주 → 며칠 여유두고 신고.
+## D. Business Place Status Report (tax-exempt businesses) — 2/10 of the following year
+
+- Tax-exempt businesses without VAT (hospitals/clinics, some academies, agriculture/livestock/fishery, etc.) **report revenue and basic expenses**.
+- [Tax Filing > Business Place Status Report]. This must be done so the data links to the May comprehensive income tax.
+- Failure to file incurs a penalty tax (0.5% for some sectors such as medical and veterinary businesses).
+
+---
+
+## E. Common Tips
+- **E-filing tax credit**: when the taxpayer files electronically in person, 20,000 won credit for comprehensive income tax, 10,000 won for VAT.
+- **Amended filing / claim for correction**: under-reporting → amended filing (penalty tax reduced), overpayment → claim for correction (refund within 5 years).
+- **Late filing after deadline**: still possible even if you miss the deadline, but a non-filing penalty tax (20%, 40% for fraud) + late-payment penalty tax (0.022% per day) apply.
+- Near deadlines, Hometax traffic surges → file a few days early with some buffer.

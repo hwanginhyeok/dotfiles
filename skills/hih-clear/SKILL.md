@@ -1,121 +1,143 @@
 ---
 name: hih-clear
-description: 세션 종료 루틴. hih-task-clear + hih-memory + hih-git 순차 실행 후 /clear. 세션 요약을 ~/.hermes/session_reports/daily/에 MD+JSON으로 저장.
+description: Session shutdown routine. Runs hih-task-clear + hih-memory + hih-git sequentially, then /clear. Saves the session summary to ~/.hermes/session_reports/daily/ as MD+JSON. Also logs decisions to Decision Log.
 user_invocable: true
 ---
 
 # /hih-clear
 
-세션 마무리 오케스트레이터.
+Session wrap-up orchestrator.
 
-## 실행 순서
+## Execution order
 
 ### 1. /hih-task-clear
-태스크 정리 (완료 이동 + audit + TASK.md 인덱스 재계산)
+Task cleanup (move completed items + audit + recompute TASK.md index)
 
 ### 2. /hih-memory
-메모리 정리 (stale 체크 + 저장 + GDrive 동기화)
+Memory cleanup (stale check + save + GDrive sync)
 
 ### 3. /hih-git
-전체 프로젝트 git 커밋 + push
+Commit + push git for all projects
 
-### 4. DIFFICULTY 기록 (선택)
+### 4. Decision Log 업데이트
 
-이번 세션에서 2시간+ 삽질이 있었으면 `DIFFICULTY.md`에 추가.
+이번 세션에서 내린 주요 의사결정이 있으면 Decision Log에 기록.
 
-**일반 문제해결 포맷:**
-```markdown
-## D-NNN: 제목
-- 날짜: YYYY-MM-DD
-- 상황: ...
-- 문제: ...
-- 삽질: ...
-- 해결: ...
-- 노하우: ...
+```bash
+DECISIONS_FILE="$HOME/project-manager/decision-log/DECISIONS.md"
 ```
 
-**테스트 작업 포맷:**
+**감지 대상:**
+- 기술/도구 선택을 결정한 경우
+- 작업 방식이나 프로세스를 정한 경우
+- 사용자 피드백으로 방향을 바꾼 경우
+- 우선순위를 조정한 경우
+- 아키텍처/구조를 결정한 경우
+
+**형식:** /hih-decide 스킬의 엔트리 형식을 따름.
+
+**의사결정이 없으면 이 단계를 건너뜀.**
+
+### 5. DIFFICULTY logging (optional)
+
+If this session involved 2+ hours of grinding, add an entry to `DIFFICULTY.md`.
+
+**General problem-solving format:**
 ```markdown
-## D-NNN: [테스트] 제목
-- 날짜: YYYY-MM-DD
-### 테스트 대상
-- 파일/기능: ...
-- 테스트 방법: ...
-### 테스트 결과
-- 상태: 성공/실패/부분 성공
-- 발견된 이슈: ...
-- 예상 vs 실제: ...
-### 상황
-- ...
-### 문제
-- ...
-### 삽질
-- ...
-### 해결
-- ...
-### 노하우
-- ...
+## D-NNN: Title
+- Date: YYYY-MM-DD
+- Situation: ...
+- Problem: ...
+- Grind: ...
+- Solution: ...
+- Know-how: ...
 ```
 
-### 5. TASK 브리핑 정리
+**Test work format:**
+```markdown
+## D-NNN: [Test] Title
+- Date: YYYY-MM-DD
+### Test target
+- File/feature: ...
+- Test method: ...
+### Test result
+- Status: success/failure/partial success
+- Issues found: ...
+- Expected vs actual: ...
+### Situation
+- ...
+### Problem
+- ...
+### Grind
+- ...
+### Solution
+- ...
+### Know-how: ...
+```
 
-전달용 파일 정리:
+### 6. TASK briefing cleanup
+
+Clean up delivery files:
 ```bash
 rm -f /tmp/*_task_*.md
 ```
 
-보관용 파일 유지 (히스토리):
+Keep archive files (history):
 ```bash
 ls -la ~/project-manager/content_queue/task_briefings/*
 ```
 
-### 6. 세션 요약 출력 + 저장 (향상된 형식)
+### 7. Print + save session summary (enhanced format)
 
 ```
-## 세션 요약
+## Session summary
 
-### 🎯 지시-결과물 매핑
-- 지시: {사용자 지시}
-- 결과물: {생성된 파일/결과}
-- 시간: {소요 시간}
-- 스킬: {사용된 스킬}
+### Instruction-to-deliverable mapping
+- Instruction: {user instruction}
+- Deliverable: {file/result produced}
+- Time: {time spent}
+- Skill: {skill used}
 
-### 📋 작업 내용
-- 완료: {태스크 목록}
-- 진행 중: {태스크 목록}
-- 신규: {추가된 태스크}
-- 잔여 이슈 (사용자 결정): {정체/블록 등}
-- 커밋: N개
+### Work content
+- Completed: {task list}
+- In progress: {task list}
+- New: {tasks added}
+- Remaining issues (user decision): {stalled/blocked, etc.}
+- Commits: N
 
-### 🎯 다음 세션 TODO
-- {이어갈 작업}
+### Next session TODO
+- {work to continue}
 
-### 💡 메모리 업데이트
-- 스킬 구성 변경: {있음/없음}
-- 모델 버전 변경: {있음/없음}
-- config 변경: {있음/없음}
+### Memory updates
+- Skill config change: {yes/no}
+- Model version change: {yes/no}
+- config change: {yes/no}
+
+### Decisions this session
+- {list of DL-NNN entries added, if any}
 ```
 
-**세션 요약 저장:**
+**Save the session summary:**
 
 ```bash
-# 보고 디렉토리 생성
+# Create report directory
 REPORT_DIR="$HOME/.hermes/session_reports/daily"
 mkdir -p "$REPORT_DIR"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
-# 마크다운 저장
+# Save markdown
 SUMMARY_MD="$REPORT_DIR/summary_${TIMESTAMP}.md"
 cat > "$SUMMARY_MD" << EOF
-# 세션 요약 ($TIMESTAMP)
-- 완료: ${TASKS_COMPLETED:-없음}
-- 진행 중: ${TASKS_IN_PROGRESS:-없음}
-- 신규: ${TASKS_NEW:-없음}
-- 잔여 이슈: ${ISSUES_BLOCKED:-없음}
-- 커밋: ${GIT_COMMIT_COUNT:-0}개
+# Session summary ($TIMESTAMP)
+- Completed: ${TASKS_COMPLETED:-none}
+- In progress: ${TASKS_IN_PROGRESS:-none}
+- New: ${TASKS_NEW:-none}
+- Remaining issues: ${ISSUES_BLOCKED:-none}
+- Commits: ${GIT_COMMIT_COUNT:-0}
+- Decisions logged: ${DECISIONS_LOGGED:-0}
 EOF
 
-# JSON 저장
+# Save JSON
 SUMMARY_JSON="$REPORT_DIR/report_${TIMESTAMP}.json"
 cat > "$SUMMARY_JSON" << EOF
 {
@@ -126,28 +148,29 @@ cat > "$SUMMARY_JSON" << EOF
   "new_tasks": [],
   "blocked_issues": [],
   "git_commit_count": 0,
-  "git_changes": {}
+  "git_changes": {},
+  "decisions_logged": 0
 }
 EOF
 
-echo "✅ 보고 저장됨: $SUMMARY_MD"
-echo "✅ 보고 저장됨: $SUMMARY_JSON"
+echo "Report saved: $SUMMARY_MD"
+echo "Report saved: $SUMMARY_JSON"
 ```
 
-### 7. handoff.md 생성 (작업 있었을 때만)
+### 8. Create handoff.md (only when there was work)
 
-작업 없는 짧은 세션은 스킵.
+Skip for short sessions with no work.
 ```markdown
-# Handoff — {날짜}
-## 작업 중이던 것
-## 컨텍스트 (이번 세션 결정 사항)
-## 다음 세션 첫 액션
+# Handoff — {date}
+## What was being worked on
+## Context (decisions made this session)
+## First action for next session
 ```
 
-### 8. /clear
+### 9. /clear
 
-## 주의
+## Notes
 
-- git push는 /hih-git이 처리
-- 순서 엄수: 1→2→3→4→5→6→7→8
-- 작업 없는 짧은 세션: 1, 2, 3, 5, 7, 8만 실행 (4, 6 스킵)
+- git push is handled by /hih-git
+- Strict order: 1→2→3→4→5→6→7→8→9
+- Short sessions with no work: run only 1, 2, 3, 4(check), 6, 8, 9 (skip 5, 7)

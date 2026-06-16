@@ -1,16 +1,17 @@
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (ko_KR.UTF-8)
 ---
 name: hih-git
-description: 전체 프로젝트 git 상태 브리핑 + 일괄 커밋/push/pull. PM 오케스트레이터용.
+description: Briefs git status across all projects + batch commit/push/pull. For the PM orchestrator.
 user_invocable: true
 ---
 
 # /hih-git
 
-전체 프로젝트의 git 상태를 브리핑하고, 일괄 커밋/push/pull을 수행한다.
+Briefs the git status of all projects and performs batch commit/push/pull.
 
-## yaml 구조 주의
+## yaml structure note
 
-`projects.yaml`의 `projects`는 **dict** 구조 (list 아님):
+`projects` in `projects.yaml` is a **dict** structure (not a list):
 ```python
 data = yaml.safe_load(open('projects.yaml'))
 projects = data['projects']  # {name: {path:..., ...}}
@@ -18,63 +19,116 @@ for name, info in projects.items():
     path = os.path.expanduser(info.get('path', ''))
 ```
 
-PM 자체(`~/project-manager`)는 yaml에 없으므로 별도 추가 필요.
+PM itself (`~/project-manager`) is not in the yaml, so it must be added separately.
 
-## 실행 순서
+## Execution order
 
-### 1. 전체 git 상태 브리핑
+### 1. Full git status briefing
 
-projects.yaml 전 프로젝트 + PM 자체:
-- uncommitted 파일 수 (`git status --short`)
-- unpushed 커밋 수 (`git log @{u}..HEAD --oneline`)
-- 현재 브랜치
-- 최근 커밋 메시지 (35자)
+#### 1-0. Git Identity 사전 검증 (commit/push 전 필수)
+
+모든 commit/push 작업 전에 반드시 git user.name / user.email 설정 여부를 확인한다.
+
+```bash
+git config user.name && git config user.email
+```
+
+- **설정됨** → 정상 진행
+- **미설정** → 해당 프로젝트에 대해 작업 중단 후 사용자에게 경고 + 안내:
+  ```
+  ⛔ {프로젝트명}: git identity 미설정
+  → 설정 후 재시도:
+    git config user.name "이름"
+    git config user.email "이메일"
+  ```
+- **주의**: `--global`이 아닌 해당 리포지토리(local) 설정을 우선 확인한다.
+
+All projects in projects.yaml + PM itself:
+- number of uncommitted files (`git status --short`)
+- number of unpushed commits (`git log @{u}..HEAD --oneline`)
+- current branch
+- latest commit message (35 chars)
 
 ```
-## Git 상태 브리핑
+## Git Status Briefing
 
-| 프로젝트 | uncommitted | unpushed | 브랜치 | 최근 커밋 |
+| Project | uncommitted | unpushed | Branch | Latest commit |
 |---------|:-----------:|:--------:|--------|----------|
 | ✅ 인성이 | 0 | 0 | master | chore: ... |
 | ⚠️ 주식부자 | 1 | 0 | master | handoff |
 | 🔴 be-a-studio | 22 | 3 | master | feat: ... |
 
-⚠️ 조치 필요:
-- 주식부자: uncommitted 1개
-- be-a-studio: uncommitted 22개 + unpushed 3개
+⚠️ Action needed:
+- 주식부자: 1 uncommitted
+- be-a-studio: 22 uncommitted + 3 unpushed
 ```
 
-### 2. 인터랙티브 명령
+### 2. Interactive commands
 
-| 명령 | 동작 |
+| Command | Action |
 |------|------|
-| `push` | uncommitted 없는 프로젝트만 일괄 push (rejected면 pull --rebase 후 재시도) |
-| `push all` | uncommitted 있으면 `git add -A && git commit -m "chore: 정리"` 후 push |
-| `pull` | 전체 stash → pull --rebase → stash pop |
+| `push` | Batch push only projects with no uncommitted changes (if rejected, pull --rebase then retry) |
+| `push all` | If uncommitted, `git add -A && git commit -m "chore: 정리"` then push |
+| `pull` | stash all → pull --rebase → stash pop |
 | `sync` | pull + push |
-| `status` | 브리핑 재출력 |
+| `status` | Re-output the briefing |
 
-### 3. push 실행 로직
+### 3. push execution logic
 
 ```
-각 프로젝트:
-1. .env/credentials staged 여부 확인 → 있으면 경고 + 중단
-2. uncommitted 있으면 → git add -A + git commit -m "chore: 정리"
+For each project:
+1. Check whether .env/credentials are staged → if so, warn + abort
+2. If uncommitted → git add -A + git commit -m "chore: 정리"
 3. git push
-4. rejected → git pull --rebase → git push 재시도
-5. 결과 출력
+4. rejected → git pull --rebase → retry git push
+5. Output result
 ```
 
-### 4. pull 실행 로직
+### 4. pull execution logic
 
 ```
-각 프로젝트:
+For each project:
 1. uncommitted → git stash
 2. git pull --rebase
-3. stash pop (충돌 시 경고, 자동 해결 안 함)
+3. stash pop (warn on conflict, do not auto-resolve)
 ```
 
-## 주의
-- force push 절대 금지
-- 충돌 자동 해결 안 함 → 사용자 보고
-- .env, credentials staged면 경고 + 해당 프로젝트 스킵
+## Notes
+- force push is absolutely prohibited
+- Do not auto-resolve conflicts → report to the user
+  - 단, **사용자가 명시적으로 승인**한 경우 theirs/ours 전략으로 rebase를 계속할 수 있다
+- If .env or credentials are staged, warn + skip that project
+
+### Rebase 충돌 해결 절차
+
+`git pull --rebase` 또는 `git rebase` 수행 중 충돌이 발생하면:
+
+1. **충돌 파일 목록 확인**:
+   ```bash
+   git diff --name-only --diff-filter=U
+   ```
+
+2. **사용자에게 충돌 내용 보고 + 해결 전략 선택 요청**:
+   - `ours` — 로컬 변경 우선 (기존 브랜치 것을 유지)
+   - `theirs` — 원격 변경 우선 (리베이스 대상 것을 유지)
+   - `manual` — 사용자가 직접 편집
+
+3. **사용자 승인 시 theirs/ours 전략으로 일괄 해결**:
+   ```bash
+   # 전부 ours로 해결
+   for f in $(git diff --name-only --diff-filter=U); do git checkout --ours "$f" && git add "$f"; done
+
+   # 전부 theirs로 해결
+   for f in $(git diff --name-only --diff-filter=U); do git checkout --theirs "$f" && git add "$f"; done
+   ```
+
+4. **해결 완료 후 rebase 계속**:
+   ```bash
+   GIT_EDITOR=true git rebase --continue
+   ```
+
+5. **rebase 자체를 포기해야 하는 경우**:
+   ```bash
+   git rebase --abort
+   ```
+   사용자에게 원인을 보고하고 수동 해결을 안내한다.

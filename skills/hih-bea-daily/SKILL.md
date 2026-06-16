@@ -1,78 +1,78 @@
 ---
 name: hih-bea-daily
-description: be-a-studio 일일 카드뉴스(AN/DG 일반 카드) 수동 제작·검증 풀 파이프라인. 정상 날짜 강제·가짜날짜 금지·k 정규조정·cover PNG(제목+사진) 검증·사진라우팅/글로벌소스 반영·publish-gate. Use when "일일 카드 만들어", "daily 카드 N개", "예시 카드 생성", "AN/DG 카드 수동 제작".
+description: be-a-studio daily card-news (AN/DG general cards) manual production & verification full pipeline. Real-date enforcement, fake-date prohibition, k regular adjustment, cover PNG (title+photo) verification, photo-routing/global-source reflection, publish-gate. Use when "일일 카드 만들어", "daily 카드 N개", "예시 카드 생성", "AN/DG 카드 수동 제작".
 ---
 
-# /hih-bea-daily — 일일 카드뉴스 수동 제작 풀 파이프라인
+# /hih-bea-daily — Daily Card-News Manual Production Full Pipeline
 
-> 2026-06-08 정립. cron 자동화(run_daily.sh)는 별도 SSOT — 이 스킬은 **수동으로 N개 만들 때의 정규 절차 + 가드 + 검증**.
-> 디자인 규칙/게이트는 [[hih-bea-design]], 주간 뉴스덱은 [[hih-bea-news]] (트랙 다름 — 9장×3테마 NW 카드).
-> **배경**: 스킬 부재로 즉흥 생성하다 가짜날짜(20260699) 우회 + folin 빈커버 사고 발생(2026-06-08). 그 교훈을 가드로 내장.
+> Established 2026-06-08. The cron automation (run_daily.sh) is a separate SSOT — this skill is the **regular procedure + guards + verification for when you manually produce N cards**.
+> Design rules/gates are in [[hih-bea-design]]; the weekly news deck is in [[hih-bea-news]] (different track — 9-slide × 3-theme NW cards).
+> **Background**: With no skill in place, ad-hoc generation led to a fake-date (20260699) bypass + folin empty-cover incident (2026-06-08). Those lessons are baked in as guards.
 
-## 트랙 구분 (헷갈리지 말 것)
-| 트랙 | 스킬 | 산출 |
+## Track distinction (don't get confused)
+| Track | Skill | Output |
 |------|------|------|
-| **일일 일반 카드** | **이 스킬** | AN/DG 카드, 7~8장, card_id `AN-YYYYMMDD-NN` |
-| 주간 뉴스덱 | [[hih-bea-news]] | NW 카드, 9장 고정×3테마 |
+| **Daily general cards** | **this skill** | AN/DG cards, 7~8 slides, card_id `AN-YYYYMMDD-NN` |
+| Weekly news deck | [[hih-bea-news]] | NW cards, fixed 9 slides × 3 themes |
 
-## 절대 가드 (위반 = 사고 재발)
-1. **가짜 날짜 절대 금지.** card_id는 반드시 실제 날짜 `YYYYMMDD`. 큐레이션 한도 부족을 날짜 조작으로 우회 금지(20260699 사고).
-2. **한도는 정규 파라미터로.** 10건 필요하면 `daily_curator.py --k N` (브랜드별 선별 수) 또는 `--k-per-brand` 조정. 우회 X.
-3. **card_id 충돌 금지.** 같은 날 기존 카드가 있으면 다음 번호로 이어가기(-04~). 기존 산출물 덮어쓰기 금지.
-4. **cover PNG 직접 검증.** 파일 크기/로그 추정 금지 — 반드시 Read로 열어 **제목+사진** 확인(거짓 PASS 3회 전례).
-5. **publish-gate.** 생성만. 외부 발행은 사용자 승인(대시보드 PIN). vercel 배포 임의 실행 금지.
+## Absolute guards (violation = incident recurrence)
+1. **Fake dates absolutely prohibited.** card_id must use the real date `YYYYMMDD`. Do not work around a curation quota shortfall by manipulating the date (the 20260699 incident).
+2. **Use regular parameters for quotas.** If you need 10 items, adjust `daily_curator.py --k N` (per-brand selection count) or `--k-per-brand`. No workarounds.
+3. **No card_id collisions.** If existing cards already exist for the same day, continue with the next number (-04~). Do not overwrite existing outputs.
+4. **Verify cover PNG directly.** Do not infer from file size/logs — you must open it with Read and confirm **title+photo** (3 prior cases of false PASS).
+5. **publish-gate.** Generation only. External publishing requires user approval (dashboard PIN). Do not run vercel deploy arbitrarily.
 
-## 기획 모델 (2026-06-08 비교 채택)
-기획(daily_planner→content_planner)은 **Codex가 기본**(`BEA_PLANNER=codex`). 비교 실측(PR#41): codex 84초·제목 3/3·slot 어휘 정확 vs claude 389초·2/3·느림 → **codex 채택**. codex 실패 시 GLM 자동 폴백(content_planner.py:1091). 명시 전환: `BEA_PLANNER=claude|panel|glm`.
-> codex가 slot 어휘를 정확히 생성해 과거 GLM의 `slot='title'`/`cta layout='quote'` 무효 어휘 렌더 에러가 줄어듦.
+## Planning model (adopted by comparison 2026-06-08)
+Planning (daily_planner→content_planner) defaults to **Codex** (`BEA_PLANNER=codex`). Measured comparison (PR#41): codex 84s · titles 3/3 · accurate slot vocabulary vs claude 389s · 2/3 · slow → **codex adopted**. On codex failure, GLM auto-fallback (content_planner.py:1091). Explicit switch: `BEA_PLANNER=claude|panel|glm`.
+> codex generates slot vocabulary accurately, reducing the past GLM render errors from invalid vocabulary like `slot='title'` / `cta layout='quote'`.
 
-## 파이프라인 (정규 — run_daily.sh SSOT)
-`DATE=YYYYMMDD`. 같은 날 재수집 불필요 시 1~2 생략하고 기존 `content_queue/daily_raw/$DATE.json` 재사용.
+## Pipeline (regular — run_daily.sh SSOT)
+`DATE=YYYYMMDD`. If recollection is unnecessary for the same day, skip 1~2 and reuse the existing `content_queue/daily_raw/$DATE.json`.
 
 ```bash
-# 1. 수집 (이미 있으면 생략)
+# 1. Collect (skip if it already exists)
 python3 scripts/daily_collector.py --date $DATE
 # 2. enrich
-python3 scripts/enrich_youtube.py --raw content_queue/daily_raw/$DATE.json   # 또는 enrich_news / enrich_gemini
+python3 scripts/enrich_youtube.py --raw content_queue/daily_raw/$DATE.json   # or enrich_news / enrich_gemini
 python3 scripts/enrich_summary.py --date $DATE
-# 3. 큐레이션 — 여기서 개수 조정 (--k). 가짜날짜 대신 이걸로!
+# 3. Curation — adjust the count here (--k). Use this instead of a fake date!
 python3 scripts/daily_curator.py --date $DATE --k 10
-# 4. codex 재정제
+# 4. codex re-refine
 python3 scripts/enrich_summary.py --date $DATE --codex --candidates
-# 5. 기획
+# 5. Planning
 python3 scripts/daily_planner.py --date $DATE
-# 6. 프롬프트
+# 6. Prompts
 python3 scripts/plan_to_prompt.py --date $DATE
-# 7. 카피 (카드별)
+# 7. Copy (per card)
 python3 scripts/content_copywriter.py --card-id "$card_id"
-# 8. 렌더 (카드별) — 사진 라우팅/folin title fix 자동 적용
+# 8. Render (per card) — photo routing/folin title fix applied automatically
 python3 scripts/render_from_plan.py --card-id "$card_id"
 # 9. provenance
 python3 scripts/generate_provenance.py --card-id "$card_id"
-# 10. 후검증 + 대시보드
+# 10. Post-verification + dashboard
 python3 scripts/card_postcheck.py --date $DATE --alert
 python3 scripts/dashboard_md.py --date $DATE
 ```
 
-## 검증 체크리스트 (발행 전 필수 — PNG 직접)
-- [ ] **가짜날짜 0**: 전 card_id가 실제 `$DATE`
-- [ ] **완전 렌더**: 각 카드 슬라이드 에러 0 (`/tmp/render_*.log`에 terminal error 없음). 아래 "알려진 planner 어휘 에러" 확인
-- [ ] **cover 제목**: cover slide PNG Read → 제목 보임 (folin/longblack 등 텍스트 스타일도 — PR#40 slot 기반 fix 반영)
-- [ ] **cover 사진**: 사진 콘텐츠 카드는 photo-capable 스타일(careet/the_edit_pick/photo_overlay/folin_dark 등)에 실제 사진 렌더 (PR#39 라우팅). 텍스트 스타일(longblack 등)은 사진 없는 게 정상
-- [ ] **글로벌 비중**: 소스에 글로벌(영어/RSS) 섞임 ([[reference: sources.yaml]] 한:글 ~1:1.4, PR#37)
-- [ ] **스타일 다양성**: cover 스타일이 한 종으로 안 몰림
+## Verification checklist (required before publishing — PNG directly)
+- [ ] **Zero fake dates**: every card_id uses the real `$DATE`
+- [ ] **Complete render**: zero slide errors per card (no terminal error in `/tmp/render_*.log`). Check the "known planner vocabulary errors" below
+- [ ] **cover title**: Read the cover slide PNG → title is visible (including text styles like folin/longblack — reflects the PR#40 slot-based fix)
+- [ ] **cover photo**: photo-content cards render an actual photo on photo-capable styles (careet/the_edit_pick/photo_overlay/folin_dark etc.) (PR#39 routing). Text styles (longblack etc.) having no photo is normal
+- [ ] **Global proportion**: sources mix in global (English/RSS) ([[reference: sources.yaml]] KR:global ~1:1.4, PR#37)
+- [ ] **Style diversity**: cover styles aren't all clustered into one type
 
-## 알려진 planner 어휘 에러 (발견 시 fix — 2026-06-08 예시 생성에서 관측)
-content_planner/copywriter가 가끔 레거시/무효 어휘를 생성해 렌더 terminal error 유발:
-- `slot='title'` (레거시) → 유효: `cover|cta|content_N`. slide1 slot이 title이면 cover 누락(AN-07 사고)
-- cta `layout='quote'` → 유효: `''` 또는 `cta`
-- data slide 필수 키 누락 → preflight 스킵
-→ 발견 시 해당 `_final.json` slot/layout 교정 후 재렌더, 또는 planner 생성단 fix 발주(BAS 후속).
+## Known planner vocabulary errors (fix when found — observed in 2026-06-08 example generation)
+content_planner/copywriter occasionally generates legacy/invalid vocabulary, causing render terminal errors:
+- `slot='title'` (legacy) → valid: `cover|cta|content_N`. If slide1 slot is title, the cover is missing (the AN-07 incident)
+- cta `layout='quote'` → valid: `''` or `cta`
+- missing required keys on a data slide → preflight skip
+→ When found, correct the slot/layout in the relevant `_final.json` and re-render, or commission a fix at the planner generation stage (BAS follow-up).
 
-## 산출물
-- 렌더: `rendered/{card_id}/v2/slide*.png`
-- 발행: 대시보드 `be-a-studio.vercel.app` → 승인+PIN → poll_approvals(*/5) → Buffer
+## Outputs
+- Render: `rendered/{card_id}/v2/slide*.png`
+- Publish: dashboard `be-a-studio.vercel.app` → approve+PIN → poll_approvals(*/5) → Buffer
 
-## 관련
-- 디자인 게이트: [[hih-bea-design]] / 주간뉴스: [[hih-bea-news]]
-- 스크립트: daily_collector / daily_curator(--k) / daily_planner / plan_to_prompt / content_copywriter / render_from_plan
+## Related
+- Design gate: [[hih-bea-design]] / weekly news: [[hih-bea-news]]
+- Scripts: daily_collector / daily_curator(--k) / daily_planner / plan_to_prompt / content_copywriter / render_from_plan

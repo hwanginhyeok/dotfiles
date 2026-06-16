@@ -1,52 +1,52 @@
 ---
 name: hih-task-clear
-description: 세션 태스크 정리 전용. 완료 이동 + task_audit + TASK.md 인덱스 재계산. hih-clear의 TASK 파트.
+description: Session task cleanup only. Move completed items + task_audit + recompute the TASK.md index. The TASK part of hih-clear.
 user_invocable: true
 ---
 
 # /hih-task-clear
 
-태스크 파일만 정리한다.
+Cleans up only the task files.
 
-## 실행 순서
+## Execution order
 
-### 1. 완료/신규 태스크 반영
-- `CURRENT_TASK.md` 읽기
-- 이번 세션 완료 태스크 → `FINISHED_TASK.md`로 이동 (완료일 기입)
-- 새 TODO → `PREPARED_TASK.md` 추가 전 ID 충돌 검사:
+### 1. Reflect completed/new tasks
+- Read `CURRENT_TASK.md`
+- Tasks completed this session → move to `FINISHED_TASK.md` (record completion date)
+- New TODO → check for ID collision before adding to `PREPARED_TASK.md`:
   ```bash
   grep -h "^| {NEW_ID} " CURRENT_TASK.md PREPARED_TASK.md FINISHED_TASK.md TASK_ARCHIVE/*.md 2>/dev/null
   ```
-  0건이어야 추가. 기존 ID 발견 시 max+1로.
+  Add only if there are 0 matches. If an existing ID is found, use max+1.
 
-### 2. 부모 태스크 흡수/병합 시 depends 갱신
-이번 세션에서 흡수/병합/폐기 발생 시:
-- 흡수/병합 → `depends: X` → `depends: Y`
-- 폐기(라인 삭제) → `depends: —`
-- archive 이동 → `depends: —` 또는 `(archive YYYY-MM)`
+### 2. Update depends when a parent task is absorbed/merged
+If absorption/merge/discard occurred this session:
+- Absorbed/merged → `depends: X` → `depends: Y`
+- Discarded (line removed) → `depends: —`
+- Moved to archive → `depends: —` or `(archive YYYY-MM)`
 
-### 3. task_audit 실행
+### 3. Run task_audit
 ```bash
 python3 /home/window11/project-manager/scripts/task_audit.py --project {프로젝트명} --text
 ```
 
-자동 처리 가능:
-- 좀비 라인 (`~~취소선~~` + 완료/취소 마킹) → 제거 또는 FINISHED 이동
-- 중복 ID → PREPARED 측 max+1 재부여
-- 고아 의존성 → TASK_ARCHIVE 검색 후 `—` 처리
+Can be handled automatically:
+- Zombie lines (`~~strikethrough~~` + completed/cancelled marking) → remove or move to FINISHED
+- Duplicate IDs → reassign max+1 on the PREPARED side
+- Orphan dependencies → search TASK_ARCHIVE, then set to `—`
 
-사용자 결정 필요 (보고만):
-- CURRENT 21일+ 정체 → 폐기/재시작 결정 요청
-- blocked 14일+ → 블로커 해소 가능 여부 확인
-- P1 인플레이션 (70%+) → P2/P3 강등 후보 제시
+Requires user decision (report only):
+- CURRENT stalled 21+ days → request a discard/restart decision
+- blocked 14+ days → confirm whether the blocker can be resolved
+- P1 inflation (70%+) → propose P2/P3 demotion candidates
 
-### 4. TASK.md 인덱스 재계산
-실제 카운트 확인:
+### 4. Recompute the TASK.md index
+Verify the actual counts:
 ```bash
 echo "CURRENT: $(grep -c "^| " CURRENT_TASK.md)개"
 echo "PREPARED: $(grep -c "^| " PREPARED_TASK.md)개"
 ```
-TASK.md 요약 라인을 실제 수로 갱신.
+Update the TASK.md summary line with the actual counts.
 
-### 5. task_audit 재검증
-정리 후 재실행 → 이슈 0건 확인. 남은 이슈는 hih-clear 세션 요약에 포함.
+### 5. Re-verify with task_audit
+Re-run after cleanup → confirm 0 issues. Include any remaining issues in the hih-clear session summary.

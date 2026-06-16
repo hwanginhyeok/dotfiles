@@ -1,16 +1,37 @@
-# 민감/대용량 파일
-.credentials.json
-history.jsonl
-policy-limits.json
-settings-glm.json
-shell-snapshots/
-sessions/
-paste-cache/
-cache/
-backups/
+# 민감 — API 키/시크릿
+glm-key-helper.sh
+*.key
+*.pem
+
+# 임시/로그
+daemon.log
+*.log
+.last-update-result.json
+
+# 백업
+*.bak
+*.bak.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code 캐시/히스토리 (git 불필요)
 file-history/
-telemetry/
-tasks/
+sessions/
 projects/
+tasks/
+paste-cache/
+shell-snapshots/
+backups/
+cache/
+history.jsonl
+telemetry/
 .last-cleanup
-skills/gstack/
+daemon/
+jobs/
+plans/
+
+# 로컬 설정 (머신 의존)
+settings.local.json
+.credentials.json

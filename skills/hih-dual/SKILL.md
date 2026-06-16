@@ -1,11 +1,11 @@
 ---
 name: hih-dual
 description: |
-  builder(Sonnet 4.6 1M) + reviewer(GLM 4.6) + PM 검증 사이클 자동화. 한 작업을
-  builder에 발주 → 결과 commit → reviewer에 diff 리뷰 → PM이 거짓 우려 검증 →
-  사용자에게 비교 보고 → 개선 라운드 또는 채택. 최대 3 라운드.
+  Automates the builder(Sonnet 4.6 1M) + reviewer(GLM 4.6) + PM verification cycle. Dispatch a task
+  to the builder → commit the result → have the reviewer review the diff → PM verifies false concerns →
+  report the comparison to the user → improvement round or adoption. Up to 3 rounds.
 
-  /hih-glm은 단발 외부 의견 (5.1). /hih-dual은 사이클 (4.6 reviewer로 빠른 반복).
+  /hih-glm is a one-shot external opinion (5.1). /hih-dual is a cycle (fast iteration with the 4.6 reviewer).
   Use when: "듀얼 작업", "builder reviewer 사이클", "Sonnet + GLM 협업"
 allowed-tools:
   - Bash
@@ -14,34 +14,34 @@ allowed-tools:
   - Edit
 ---
 
-# /hih-dual — Builder/Reviewer 사이클
+# /hih-dual — Builder/Reviewer Cycle
 
-## 핵심 원리
+## Core Principle
 
-같은 tmux 세션의 pane 2개로:
-- **pane 1 (Sonnet 4.6 1M)** — builder. 코드 작성/수정/commit.
-- **pane 2 (GLM 4.6)** — reviewer. 빠른 응답으로 diff 비판.
-- **PM (이 세션)** — orchestrator. 양쪽 발사·idle 폴링·결과 비교·거짓 우려 검증·사용자에게 결정 요청.
+Using 2 panes of the same tmux session:
+- **pane 1 (Sonnet 4.6 1M)** — builder. Writes/modifies code and commits.
+- **pane 2 (GLM 4.6)** — reviewer. Critiques the diff with fast responses.
+- **PM (this session)** — orchestrator. Dispatches both sides, polls for idle, compares results, verifies false concerns, requests a decision from the user.
 
-PM 검증이 백스톱이라 reviewer 4.6의 거짓 우려도 잡힘 (PM이 grep/python으로 사실 검증).
+Because PM verification is the backstop, even false concerns from reviewer 4.6 are caught (PM verifies facts with grep/python).
 
-/hih-glm 단발 호출 대비 장점: 빌더-리뷰어 자동 핑퐁 + commit 보존 + 라운드 관리.
-단점: 라운드당 30~60분. 무거운 작업 적합.
+Advantage over a one-shot /hih-glm call: automatic builder-reviewer ping-pong + commit preservation + round management.
+Disadvantage: 30~60 minutes per round. Suited for heavy tasks.
 
-## 모델 정책
+## Model Policy
 
-| pane | 평상시 | /hih-dual 사이클 시 |
+| pane | Normal | During /hih-dual cycle |
 |---|---|---|
-| pane 1 | Sonnet 4.6 1M | 그대로 (builder) |
-| pane 2 | **GLM 5.1** (default) | **4.6 임시 전환** (빠른 reviewer 응답). 사이클 끝나면 5.1 복귀 |
+| pane 1 | Sonnet 4.6 1M | unchanged (builder) |
+| pane 2 | **GLM 5.1** (default) | **temporarily switched to 4.6** (fast reviewer responses). Reverts to 5.1 when the cycle ends |
 
-## 전제 조건
+## Preconditions
 
-1. cwd basename = tmux 세션명 (예: `~/music-lab` → `music-lab`)
-2. pane 2개. pane 1 = `claude`(Sonnet), pane 2 = `claude-glm`(GLM)
-3. `Z_AI_API_KEY` 설정
+1. cwd basename = tmux session name (e.g. `~/music-lab` → `music-lab`)
+2. 2 panes. pane 1 = `claude`(Sonnet), pane 2 = `claude-glm`(GLM)
+3. `Z_AI_API_KEY` set
 
-## Step 0: 환경 검증
+## Step 0: Environment Verification
 
 ```bash
 [ -n "$Z_AI_API_KEY" ] || { echo "❌ Z_AI_API_KEY 없음"; exit 1; }
@@ -51,7 +51,7 @@ PANES=$(tmux list-panes -t "$SESSION" | wc -l)
 [ "$PANES" -lt 2 ] && { echo "❌ pane 2개 필요"; exit 1; }
 ```
 
-## Step 1: pane 2를 4.6으로 임시 전환
+## Step 1: Temporarily Switch pane 2 to 4.6
 
 ```bash
 # pane 2 현재 모델 검증
@@ -66,9 +66,9 @@ if echo "$P2_MODEL" | grep -q "5.1"; then
 fi
 ```
 
-## Step 2: builder(pane 1)에 task 발사
+## Step 2: Dispatch the Task to builder(pane 1)
 
-ARGUMENTS = builder가 수행할 task. PM이 prompt 구성:
+ARGUMENTS = the task the builder will perform. PM composes the prompt:
 
 ```bash
 TS=$(date +%s)
@@ -91,7 +91,7 @@ tmux send-keys -t "${SESSION}.1" Enter
 tmux delete-buffer -b hih_dual_buf
 ```
 
-## Step 3: builder idle 폴링
+## Step 3: Poll for builder Idle
 
 ```bash
 # Sonnet idle 마커: "Worked for|Cooked for|Sautéed for|Beaming|Cogitated for"
@@ -114,7 +114,7 @@ done
 tmux capture-pane -t "${SESSION}.1" -p -S -3000 > "/tmp/hih_dual_builder_${TS}.txt"
 ```
 
-## Step 4: builder 결과 분석 + diff 추출
+## Step 4: Analyze builder Result + Extract diff
 
 ```bash
 # 새 commit 확인
@@ -134,7 +134,7 @@ echo "  diff 라인: $DIFF_LINES"
 echo "======================="
 ```
 
-## Step 5: reviewer(pane 2 GLM 4.6)에 리뷰 발사
+## Step 5: Dispatch the Review to reviewer(pane 2 GLM 4.6)
 
 ```bash
 REVIEW_FILE="/tmp/hih_dual_review_prompt_${TS}.txt"
@@ -175,15 +175,15 @@ tmux send-keys -t "${SESSION}.2" Enter
 tmux delete-buffer -b hih_dual_rev_buf
 ```
 
-## Step 6: reviewer idle 폴링
+## Step 6: Poll for reviewer Idle
 
-Step 3과 동일 구조. GLM 4.6 idle 마커: "Cogitated for|Brewed for|Pondered for|Cooked for|Baked for".
+Same structure as Step 3. GLM 4.6 idle markers: "Cogitated for|Brewed for|Pondered for|Cooked for|Baked for".
 
 ```bash
 # 동일 패턴, timeout 600초 (10분 — 4.6은 빠름)
 ```
 
-## Step 7: PM 검증 (백스톱)
+## Step 7: PM Verification (Backstop)
 
 ```bash
 RESP_FILE="/tmp/hih_dual_review_response_${TS}.txt"
@@ -199,9 +199,9 @@ awk '/^[#●] INFORMATIONAL/,/^[#●] OK/' "$RESP_FILE" > "/tmp/hih_dual_info_${
 # (이건 케이스별로 PM이 판단)
 ```
 
-PM이 CRITICAL/INFO 항목 중 의심되는 것 grep/python/ls로 검증 → 거짓 우려는 별도 표시.
+PM verifies suspicious CRITICAL/INFO items with grep/python/ls → marks false concerns separately.
 
-## Step 8: 사용자에게 비교 보고 + 결정
+## Step 8: Comparison Report + Decision to the User
 
 ```
 ## /hih-dual round N 보고
@@ -226,12 +226,12 @@ PM이 CRITICAL/INFO 항목 중 의심되는 것 grep/python/ls로 검증 → 거
 (C) 폐기 (commit revert)
 ```
 
-## Step 9: 라운드 관리
+## Step 9: Round Management
 
-사용자가 (A) 선택 시 → 라운드 카운터 ++ → builder에 픽스 묶음 발사 → Step 3~8 반복.
-**최대 3 라운드**. 4 라운드 진입 시 사용자에게 "별도 태스크 분리" 강제 권고.
+When the user selects (A) → increment the round counter → dispatch the fix bundle to the builder → repeat Steps 3~8.
+**Maximum 3 rounds**. On entering round 4, strongly recommend "split into a separate task" to the user.
 
-## Step 10: 사이클 종료 + pane 2 복귀
+## Step 10: End the Cycle + Revert pane 2
 
 ```bash
 tmux send-keys -t "${SESSION}.2" "/model glm-5.1" Enter
@@ -239,7 +239,7 @@ sleep 4
 echo "✅ pane 2 → GLM 5.1 (default 복귀)"
 ```
 
-## 사용 예
+## Usage Examples
 
 ```bash
 # music-lab cwd에서
@@ -249,36 +249,36 @@ echo "✅ pane 2 → GLM 5.1 (default 복귀)"
 /hih-dual "scripts/dual_pane.sh 에러 핸들링 보강 — 빈 prompt + 세션 부재 + pane 부재 케이스"
 ```
 
-## 핵심 원칙
+## Core Principles
 
-1. **PM이 사이클 매니저** — 발사·폴링·검증·라운드 결정 모두 PM. 사용자는 결정 포인트에서만 개입.
-2. **Reviewer 응답 verbatim** — 자르거나 요약 X.
-3. **PM 검증 백스톱** — 4.6 reviewer가 거짓 우려 던질 수 있음. PM이 grep/python으로 정정 후 사용자 보고.
-4. **최대 3 라운드** — 더 많이 필요하면 작업 분할 권고.
-5. **사이클 끝나면 pane 2 5.1 복귀** — default 상태 보장.
-6. **builder commit 보존** — 폐기 시 사용자가 명시적 revert 결정. PM이 자동 revert X.
+1. **PM is the cycle manager** — dispatching, polling, verifying, and round decisions are all PM's. The user only intervenes at decision points.
+2. **Reviewer response verbatim** — do not truncate or summarize.
+3. **PM verification backstop** — the 4.6 reviewer may raise false concerns. PM corrects them with grep/python before reporting to the user.
+4. **Maximum 3 rounds** — if more is needed, recommend splitting the task.
+5. **Revert pane 2 to 5.1 when the cycle ends** — guarantee the default state.
+6. **Preserve the builder commit** — on discard, the user makes an explicit revert decision. PM does NOT auto-revert.
 
-## 에러 처리
+## Error Handling
 
-| 케이스 | 처리 |
+| Case | Handling |
 |---|---|
-| builder 15분 timeout | 강제 capture + "Sonnet 무응답 — pane 직접 확인" |
-| reviewer 10분 timeout | 강제 capture + 4.6 그대로 + 사용자 결정 |
-| builder가 사용자 컨펌 요청(AskUserQuestion 같음) | PM이 그 질문을 사용자에게 전달 + 답변 → builder에 sync |
-| reviewer 4.6 거짓 우려 5건+ | "5.1로 재리뷰 권고 — /hih-glm review <hash>" |
-| pane 1·2 모델 잘못 | 경고 + 그래도 진행 |
+| builder 15-minute timeout | Force capture + "Sonnet 무응답 — pane 직접 확인" |
+| reviewer 10-minute timeout | Force capture + keep 4.6 + user decision |
+| builder requests user confirmation (like AskUserQuestion) | PM relays that question to the user + answer → syncs to the builder |
+| reviewer 4.6 false concerns 5+ | "5.1로 재리뷰 권고 — /hih-glm review <hash>" |
+| pane 1·2 model wrong | Warn + proceed anyway |
 
-## 검증 사례 (PIPE-F10, 2026-05-06)
+## Verification Case (PIPE-F10, 2026-05-06)
 
-builder/reviewer 패턴 음악-lab에서 첫 검증 (수동 절차):
-- v1 (commit 2ccf182): Sonnet 30분 작업, GLM 4.6 리뷰 1m20s — CRITICAL 5건
-- PM 결정: CRITICAL 3건 채택 → builder에 픽스 묶음 발사
-- v2 (commit 91046ab): Sonnet 4분 픽스, GLM 4.6 재리뷰 70s — 거짓 우려 2건 (MRO, untracked) — PM 검증으로 정정
-- 결과: PROD ready, 잔여 INFO는 PIPE-F10b 별도 태스크로 분리
+First verification of the builder/reviewer pattern in music-lab (manual procedure):
+- v1 (commit 2ccf182): Sonnet 30-minute work, GLM 4.6 review 1m20s — 5 CRITICAL items
+- PM decision: adopt 3 CRITICAL items → dispatch fix bundle to builder
+- v2 (commit 91046ab): Sonnet 4-minute fix, GLM 4.6 re-review 70s — 2 false concerns (MRO, untracked) — corrected by PM verification
+- Result: PROD ready, remaining INFO split into the separate task PIPE-F10b
 
-이 SKILL은 그 절차를 자동화한 버전.
+This SKILL is the automated version of that procedure.
 
-## 임시 파일 청소
+## Temp File Cleanup
 
 ```bash
 find /tmp -maxdepth 1 -name "hih_dual_*" -mtime +7 -delete 2>/dev/null

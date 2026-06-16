@@ -1,0 +1,1 @@
+/home/window11/project-manager/global-rules/test-first.md

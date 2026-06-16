@@ -1,0 +1,13 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "__tmp_probe__",
+  "version": "0.1.0",
+  "description": "probe",
+  "author": {
+    "name": "hwanginhyeok",
+    "email": "dlsgur5560@gmail.com"
+  },
+  "skills": [
+    "./"
+  ]
+}

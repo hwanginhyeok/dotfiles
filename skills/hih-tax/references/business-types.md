@@ -1,92 +1,92 @@
-# 업종별 분류 — 장부의무 · 경비율 · 과세유형 · 절세 포인트
+# Classification by Business Type — Bookkeeping Obligation · Expense Rate · Taxation Type · Tax-Saving Points
 
-> 기준 시점: **2025년 귀속(2026년 신고)**. 금액은 신고 직전 홈택스 재확인.
-> 이 표로 사업자 프로파일링(SKILL STEP 1)의 ①업종 → 장부의무·경비율 등급·과세/면세를 판정한다.
-
----
-
-## 1. 과세유형 판정 (부가세 관점)
-
-| 유형 | 기준 | 부가세 신고 |
-|------|------|------------|
-| **일반과세자** | 연 매출 1억 400만원 이상 또는 간이 배제 업종/지역 | 매출세액 10% − 매입세액. 1·7월 확정신고 |
-| **간이과세자** | 연 매출 **1억 400만원 미만** (2024.7~ 상향) | 매출 × 업종부가율 × 10%. 1월만 신고 |
-| └ 부동산임대·과세유흥 | 연 매출 **4,800만원 미만** (예외 업종) | 동일 |
-| **부가세 납부면제** | 간이 중 연 매출 **4,800만원 미만** | 신고는 하되 납부 면제, 세금계산서 발급 불가 |
-| **면세사업자** | 부가세 면세 재화·용역 (아래 면세 업종) | 부가세 없음. 대신 **사업장현황신고**(2/10) |
-
-**간이 배제(무조건 일반과세)**: 제조·도매(일부)·전문직·부동산매매·다른 일반과세 사업장 보유 등. 신규 등록 시 국세청이 판정.
-
-### 면세 업종 (부가세 면세 → 사업장현황신고 대상)
-- 의료보건(의원·한의원·약국 일부), 교육(학원 일부·과외), 농축수산물(미가공), 도서·신문, 예술창작, 주택임대, 인적용역 프리랜서(일부) 등.
-- 면세는 부가세를 안 내지만 **종합소득세는 낸다**.
+> Reference point: **2025 tax year (filed in 2026)**. Re-verify amounts on Hometax right before filing.
+> Use this table for business-owner profiling (SKILL STEP 1): from ① business type → determine bookkeeping obligation, expense-rate tier, and taxable/tax-exempt status.
 
 ---
 
-## 2. 장부의무 판정 (종소세 관점)
+## 1. Taxation Type Determination (VAT perspective)
 
-직전연도 수입금액(매출) 기준. **그 이상이면 복식부기 의무, 미만이면 간편장부 대상.**
+| Type | Criteria | VAT Filing |
+|------|----------|------------|
+| **General taxpayer (일반과세자)** | Annual revenue 104 million KRW or more, or business type/region excluded from simplified status | Output tax 10% − input tax. Final return in Jan and Jul |
+| **Simplified taxpayer (간이과세자)** | Annual revenue **under 104 million KRW** (raised from 2024.7) | Revenue × business-type VAT rate × 10%. Filed in January only |
+| └ Real-estate rental · taxable entertainment | Annual revenue **under 48 million KRW** (exception business types) | Same |
+| **VAT payment exemption** | Among simplified taxpayers, annual revenue **under 48 million KRW** | Must file but payment exempt; cannot issue tax invoices |
+| **Tax-exempt business (면세사업자)** | VAT-exempt goods/services (tax-exempt types below) | No VAT. Instead, **business-place status report (사업장현황신고)** (2/10) |
 
-| 업종 그룹 | 대표 업종 | 복식부기 의무 기준 | 단순경비율 기준(추계) |
+**Excluded from simplified status (always general taxpayer)**: manufacturing, wholesale (some), licensed professionals, real-estate dealing, holding another general-taxation business place, etc. The NTS determines this at new registration.
+
+### Tax-Exempt Business Types (VAT-exempt → subject to business-place status report)
+- Medical/health (some clinics · oriental clinics · pharmacies), education (some academies · private tutoring), agricultural/livestock/fishery products (unprocessed), books · newspapers, artistic creation, residential rental, freelance personal services (some), etc.
+- Tax-exempt businesses pay no VAT, but **they do pay comprehensive income tax**.
+
+---
+
+## 2. Bookkeeping Obligation Determination (income tax perspective)
+
+Based on prior-year revenue (sales). **At or above the threshold = double-entry bookkeeping obligation; below it = subject to simplified bookkeeping.**
+
+| Business Group | Representative Types | Double-Entry Bookkeeping Threshold | Simple Expense Rate Threshold (estimation) |
 |-----------|----------|-------------------|----------------------|
-| **그룹1** | 도소매, 부동산매매, 농임어업, 광업 | **3억원** 이상 | 6,000만원 |
-| **그룹2** | 제조, 음식·숙박, 건설, 운수·창고, 정보통신, 금융보험 | **1.5억원** 이상 | 3,600만원 |
-| **그룹3** | 부동산임대, 서비스(전문·과학·기술), 교육, 보건, 예술, 개인서비스, 가구내고용 | **7,500만원** 이상 | 2,400만원 |
-| **전문직** | 의사·변호사·세무사·회계사·변리사·건축사 등 | **금액 무관 무조건 복식부기** | 단순경비율 적용 불가 |
+| **Group 1** | Wholesale/retail, real-estate dealing, agriculture/forestry/fishery, mining | **300 million KRW** or more | 60 million KRW |
+| **Group 2** | Manufacturing, food/lodging, construction, transport/warehousing, information & communications, finance/insurance | **150 million KRW** or more | 36 million KRW |
+| **Group 3** | Real-estate rental, services (professional/scientific/technical), education, health, arts, personal services, household employment | **75 million KRW** or more | 24 million KRW |
+| **Licensed professionals** | Doctors · lawyers · tax accountants · CPAs · patent attorneys · architects, etc. | **Double-entry bookkeeping mandatory regardless of amount** | Simple expense rate not applicable |
 
-> **신규 사업자**는 첫해 수입 무관 간편장부 대상(전문직·일정규모 제외).
+> **New business owners** are subject to simplified bookkeeping in their first year regardless of revenue (except licensed professionals and certain scales).
 
-### 경비율 등급 (장부 없이 추계신고 할 때)
-- **단순경비율 대상**: 위 "단순경비율 기준" 미만 + 신규. 수입에 단순경비율(업종별 60~90%대)을 곱해 경비 인정 → 매우 간단.
-- **기준경비율 대상**: 단순경비율 기준 이상. 주요경비(매입·인건비·임차료)는 증빙으로, 나머지는 기준경비율(보통 한 자릿수~10%대)만 인정 → 증빙 없으면 세금 폭증. **사실상 장부 작성 강제**.
-- 업종별 정확한 경비율: 홈택스 「조회/발급 > 기타조회 > 기준·단순 경비율」 또는 국세청 경비율 고시.
-- **기준경비율 추계 상한(배율)**: 기준경비율 소득금액은 `단순경비율 소득금액 × 배율`을 한도로 함. 배율 = 간편장부대상 2.8배 / 복식부기의무 3.4배.
-- 경비율 예시(2025 귀속, 검증 2026-05-31): 전자상거래 소매(525101) **단순 86.0% / 기준 11.8%** ([indicode](https://indicode.kr/explanation/business/2024/525101)). 업종마다 다르니 본인 코드로 홈택스 재확인.
+### Expense Rate Tiers (when filing by estimation without books)
+- **Simple expense rate eligible**: below the "Simple Expense Rate Threshold" above + new business. Multiply revenue by the simple expense rate (60–90%-ish by type) to recognize expenses → very simple.
+- **Standard expense rate eligible**: at or above the simple expense rate threshold. Main expenses (purchases · labor · rent) are recognized only with documentation; the rest is recognized only at the standard expense rate (usually single digit to ~10%) → without documentation, taxes balloon. **In practice, this forces bookkeeping.**
+- For exact expense rates by type: Hometax 「조회/발급 > 기타조회 > 기준·단순 경비율」 or the NTS expense-rate notice.
+- **Standard expense rate estimation cap (multiplier)**: standard-expense-rate income is capped at `simple-expense-rate income × multiplier`. Multiplier = 2.8x for those subject to simplified bookkeeping / 3.4x for those obligated to double-entry bookkeeping.
+- Expense rate example (2025 tax year, verified 2026-05-31): e-commerce retail (525101) **simple 86.0% / standard 11.8%** ([indicode](https://indicode.kr/explanation/business/2024/525101)). Rates differ by type, so re-verify with your own code on Hometax.
 
-### 성실신고확인 대상 (세무사 확인서 필수, 신고기한 6/30)
-| 그룹 | 기준 수입금액 |
+### Subject to Faithful-Reporting Verification (tax accountant's verification statement required, filing deadline 6/30)
+| Group | Threshold Revenue |
 |------|--------------|
-| 그룹1 | 15억원 이상 |
-| 그룹2 | 7.5억원 이상 |
-| 그룹3 | 5억원 이상 |
+| Group 1 | 1.5 billion KRW or more |
+| Group 2 | 750 million KRW or more |
+| Group 3 | 500 million KRW or more |
 
 ---
 
-## 3. 업종별 프로파일 + 절세 포인트
+## 3. Profiles by Business Type + Tax-Saving Points
 
-### 음식점 / 카페 (그룹2)
-- 과세유형: 보통 일반/간이. 의제매입세액공제(농축수산물 매입분 부가세 공제) 핵심.
-- 절세: ① 의제매입세액공제(면세 농산물 매입) ② 신용카드매출 세액공제 ③ 식자재·임차료·인건비 적격증빙 철저 ④ 배달앱 수수료 비용처리.
-- 함정: 현금매출 누락 적발 위험. 포스(POS)·배달앱 정산과 신고 매출 일치.
+### Restaurant / Café (Group 2)
+- Taxation type: usually general/simplified. Deemed input tax credit (VAT credit on purchases of agricultural/livestock/fishery products) is key.
+- Tax saving: ① deemed input tax credit (purchases of tax-exempt agricultural products) ② credit card sales tax credit ③ thorough qualified documentation for ingredients · rent · labor ④ expense out delivery-app fees.
+- Pitfall: risk of being caught for omitting cash sales. Match POS · delivery-app settlements with reported sales.
 
-### 온라인쇼핑몰 / 오픈마켓 / 스마트스토어 (그룹1 도소매)
-- 과세유형: 매출 크면 일반. 복식부기 기준 3억 높음.
-- 절세: ① 매입(사입) 세금계산서 100% 수취 ② 택배·포장·광고비 비용처리 ③ 플랫폼 수수료·PG수수료 비용 ④ 재고 평가.
-- 함정: 플랫폼 정산내역 = 국세청 통보. 매출 누락 불가. 다수 플랫폼 합산.
+### Online Shopping Mall / Open Market / Smart Store (Group 1 wholesale/retail)
+- Taxation type: general if sales are large. The 300 million double-entry bookkeeping threshold is high.
+- Tax saving: ① receive 100% of purchase (sourcing) tax invoices ② expense out delivery · packaging · advertising costs ③ platform fees · PG fees as expenses ④ inventory valuation.
+- Pitfall: platform settlement records = reported to the NTS. Sales cannot be omitted. Aggregate across multiple platforms.
 
-### 프리랜서 / 1인 지식서비스 (개발·디자인·강사·작가, 그룹3 인적용역)
-- 보통 3.3% 원천징수된 사업소득. 면세 인적용역인 경우 많음.
-- 절세: ① 단순경비율 vs 실제경비 장부 유불리 비교(고소득이면 장부가 유리한 경우 많음) ② 노트북·소프트웨어·통신·교육비 경비 ③ 노란우산+연금계좌 세액공제 ④ 기 원천징수세액 = 기납부세액 환급.
-- 함정: 단순경비율(예 64.1%)만 믿다 고소득 구간에서 세금 과다.
+### Freelancer / Solo Knowledge Service (developer · designer · instructor · writer, Group 3 personal services)
+- Usually business income with 3.3% withholding. Often a tax-exempt personal service.
+- Tax saving: ① compare advantage of simple expense rate vs. actual-expense bookkeeping (for high income, bookkeeping is often more favorable) ② expense out laptop · software · communications · education costs ③ Noran Umbrella (노란우산) + pension account tax credit ④ already-withheld tax = prepaid tax refund.
+- Pitfall: relying only on the simple expense rate (e.g., 64.1%) leads to excessive tax in high-income brackets.
 
-### 미용실 / 네일 / 개인서비스 (그룹3)
-- 절세: ① 재료비·임차료·인건비 증빙 ② 간이→일반 전환 시점 관리 ③ 현금영수증 의무발행업종 주의(미발급 가산세).
+### Hair Salon / Nail / Personal Service (Group 3)
+- Tax saving: ① documentation for materials · rent · labor ② manage timing of the simplified→general transition ③ watch out for cash-receipt mandatory-issuance business types (non-issuance penalty tax).
 
-### 학원 / 교습소 / 과외 (그룹3, 일부 면세)
-- 면세면 사업장현황신고(2/10). 절세: 강사 인건비 원천징수 적격처리, 교재·임차료.
+### Academy / Tutoring Center / Private Tutoring (Group 3, partly tax-exempt)
+- If tax-exempt, business-place status report (2/10). Tax saving: qualified withholding on instructor labor, materials · rent.
 
-### 부동산임대 (그룹3, 복식부기 7,500만)
-- 간주임대료(보증금 × 정기예금이자율) 과세 주의. 절세: 이자비용·재산세·수선비 경비, 분리과세 주택임대(2천만 이하) 검토.
+### Real-Estate Rental (Group 3, double-entry bookkeeping 75 million)
+- Watch out for deemed rental income (deposit × fixed-deposit interest rate) being taxed. Tax saving: expense out interest costs · property tax · repair costs; consider separate-taxation residential rental (under 20 million).
 
-### 건설 / 인테리어 / 운수 (그룹2)
-- 절세: 외주비·자재비 세금계산서, 차량·장비 감가상각, 일용직 인건비 적격신고.
+### Construction / Interior / Transport (Group 2)
+- Tax saving: tax invoices for outsourcing · material costs, depreciation of vehicles · equipment, qualified reporting of day-labor wages.
 
-### 제조 (그룹2, 복식부기 1.5억)
-- 절세: 원재료 매입세액, 기계장치 감가상각·통합투자세액공제, 창업중소기업 감면 가능성.
+### Manufacturing (Group 2, double-entry bookkeeping 150 million)
+- Tax saving: input tax on raw materials, machinery depreciation · integrated investment tax credit, possible startup SME reduction.
 
 ---
 
-## 4. 판정 출력 템플릿 (STEP 1 결과)
+## 4. Determination Output Template (STEP 1 result)
 
 ```
 ## 세무 프로파일 — {업종}

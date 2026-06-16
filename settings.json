@@ -1,0 +1,158 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Edit",
+      "Write",
+      "WebFetch"
+    ],
+    "deny": [
+      "Bash(rm -rf *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); FILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // empty'); if [[ \"$FILE\" == *.env* ]] || [[ \"$FILE\" == *credentials* ]] || [[ \"$FILE\" == *secret* ]]; then echo 'Blocked: 보호 파일 (.env/credentials/secret) 편집 차단' >&2; exit 2; fi",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); CONTENT=$(echo \"$INPUT\" | jq -r '.tool_input.new_string // .tool_input.content // empty'); if echo \"$CONTENT\" | grep -qiP 'f[\"\\x27].*\\{.*\\}.*SQL|execute\\(f[\"\\x27]|raw\\(f[\"\\x27]'; then echo 'Blocked: SQL 인젝션 위험 패턴 감지' >&2; exit 2; fi",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); CONTENT=$(echo \"$INPUT\" | jq -r '.tool_input.new_string // .tool_input.content // empty'); if echo \"$CONTENT\" | grep -qiP '(api_key|secret|password|token)\\s*=\\s*[\"\\x27][A-Za-z0-9+/=]{20,}'; then echo 'Blocked: 하드코딩된 시크릿 감지' >&2; exit 2; fi",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); CMD=$(echo \"$INPUT\" | jq -r '.tool_input.command // empty'); DOMINATED='rm -rf|DROP TABLE|TRUNCATE|git push --force|git reset --hard|kubectl delete|docker system prune'; SAFE_RM='node_modules|.next|dist|__pycache__|.cache|build|.turbo|coverage|.pytest_cache|\\.venv|rendered|songs|suno|debug'; if echo \"$CMD\" | grep -qiP \"$DOMINATED\"; then if echo \"$CMD\" | grep -qiP \"$SAFE_RM\"; then exit 0; fi; echo \"⚠️ 파괴적 명령 감지: $CMD\" >&2; exit 2; fi",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); SKILL=$(echo \"$INPUT\" | jq -r '.tool_input.skill // empty'); if [[ -n \"$SKILL\" ]]; then python3 /home/window11/.claude/hooks/skill_usage_track.py --track \"$SKILL\" 2>/dev/null || true; fi",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); FILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // empty'); if [[ \"$FILE\" == *.py ]]; then python3 -c \"import py_compile; py_compile.compile('$FILE', doraise=True)\" 2>&1 || true; fi",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); FILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // empty'); if [[ \"$FILE\" == *.ts ]] || [[ \"$FILE\" == *.tsx ]]; then DIR=$(dirname \"$FILE\"); PROJ_ROOT=\"$DIR\"; while [ \"$PROJ_ROOT\" != '/' ] && [ ! -f \"$PROJ_ROOT/tsconfig.json\" ]; do PROJ_ROOT=$(dirname \"$PROJ_ROOT\"); done; if [ -f \"$PROJ_ROOT/tsconfig.json\" ]; then cd \"$PROJ_ROOT\" && npx tsc --noEmit --pretty 2>&1 | tail -5 || true; fi; fi",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); CMD=$(echo \"$INPUT\" | jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -q 'git commit'; then git log --oneline -1 && git diff --stat HEAD~1..HEAD 2>/dev/null || true; if [[ \"${ANTHROPIC_BASE_URL:-}\" == *z.ai* ]]; then echo '[GLM-5.1] 이 커밋은 Z.ai GLM 모델이 작성'; fi; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); PROMPT=$(echo \"$INPUT\" | jq -r '.prompt // empty'); SKILL=$(echo \"$PROMPT\" | grep -oP '^\\s*/\\K[a-zA-Z][a-zA-Z0-9_-]*' | head -1); if [[ -z \"$SKILL\" ]]; then exit 0; fi; if [[ -d \"/home/window11/.claude/skills/$SKILL\" ]]; then timeout 3 python3 /home/window11/.claude/hooks/skill_usage_track.py --track \"$SKILL\" 2>/dev/null || true; fi",
+            "timeout": 4
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '=== Git Status ===' && git status -s 2>/dev/null || echo '(git repo 아님)' && echo '=== Recent Commits ===' && git log --oneline -3 2>/dev/null || true; if [[ \"${ANTHROPIC_BASE_URL:-}\" == *z.ai* ]]; then echo '=== GLM 모드 ===' && echo 'Model: Z.ai GLM (커밋 시 Co-Authored-By: GLM-5.1 태그 필수)'; fi",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "python3 /home/window11/.claude/hooks/skill_usage_track.py --rebuild 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f tonight_prompt.txt ]; then echo \"[야간작업] $(date '+%H:%M') 턴 완료 — $(git log --oneline -1 2>/dev/null)\" >> logs/overnight_progress.log 2>/dev/null; fi",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tmux display-message 'Claude 작업 완료 — 입력 대기 중' 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  },
+  "effortLevel": "high",
+  "theme": "light",
+  "skipWorkflowUsageWarning": true
+}

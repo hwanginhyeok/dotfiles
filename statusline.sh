@@ -14,8 +14,9 @@ else
   MODEL=$(echo "$input" | jq -r '.model.display_name' | sed 's/ (.*context)//' | sed 's/Claude //')
 fi
 
-# 컨텍스트
+# 컨텍스트 — 사용량 기준 표기 (5h/7d와 방향 통일, 2026-05-23 변경)
 CTX_REMAIN=$(echo "$input" | jq -r '.context_window.remaining_percentage // 0' | cut -d. -f1)
+CTX_USED=$((100 - ${CTX_REMAIN:-0}))
 
 # 디렉토리 (JSON의 workspace.current_dir 우선)
 DIR=$(echo "$input" | jq -r '.workspace.current_dir // empty')
@@ -27,9 +28,9 @@ YELLOW='\033[33m'
 GREEN='\033[32m'
 RESET='\033[0m'
 
-# 컨텍스트 색상 (남은 비율 기준)
-if [ "${CTX_REMAIN:-100}" -le 10 ]; then CTX_COLOR=$RED
-elif [ "${CTX_REMAIN:-100}" -le 30 ]; then CTX_COLOR=$YELLOW
+# 컨텍스트 색상 (사용량 기준 — 5h/7d와 통일)
+if [ "${CTX_USED:-0}" -ge 90 ]; then CTX_COLOR=$RED
+elif [ "${CTX_USED:-0}" -ge 70 ]; then CTX_COLOR=$YELLOW
 else CTX_COLOR=$GREEN; fi
 
 # --- 5시간 rate limit ---
@@ -85,7 +86,7 @@ if [ -s "$ALERT_FILE" ]; then
 fi
 
 if $IS_GLM; then
-  echo -e "[${MODEL}] ctx:${CTX_COLOR}${CTX_REMAIN}%${RESET} | 📁${DIR}${OVERNIGHT}${ALERT}"
+  echo -e "[${MODEL}] ctx:${CTX_COLOR}${CTX_USED}%${RESET} | 📁${DIR}${OVERNIGHT}${ALERT}"
 else
-  echo -e "[${MODEL}] ctx:${CTX_COLOR}${CTX_REMAIN}%${RESET} | 📁${DIR} | 5h:${R5_COLOR}${RATE_5H_PCT}%↺${RATE_5H_TIME}${RESET} | 7d:${R7_COLOR}${RATE_7D_PCT}%↺${RATE_7D_LABEL}${RESET}${OVERNIGHT}${ALERT}"
+  echo -e "[${MODEL}] ctx:${CTX_COLOR}${CTX_USED}%${RESET} | 📁${DIR} | 5h:${R5_COLOR}${RATE_5H_PCT}%↺${RATE_5H_TIME}${RESET} | 7d:${R7_COLOR}${RATE_7D_PCT}%↺${RATE_7D_LABEL}${RESET}${OVERNIGHT}${ALERT}"
 fi

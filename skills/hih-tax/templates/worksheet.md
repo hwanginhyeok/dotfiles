@@ -1,60 +1,60 @@
-# 세무신고 입력 워크시트
+# Tax Filing Input Worksheet
 
-> 사용자가 채우면 스킬이 세액 추정·신고 준비에 사용. 복사해서 값만 채우세요.
-> 모르는 항목은 비워두면 스킬이 취합 방법을 안내합니다.
+> Once the user fills this in, the skill uses it for tax estimation and filing prep. Copy it and just fill in the values.
+> Leave unknown items blank and the skill will guide you on how to gather them.
 
-## 0. 사업자 기본정보
-- 업종(구체적): __________________ (예: 온라인 의류쇼핑몰, 카페, 프리랜서 개발)
-- 과세유형: [ ] 일반과세  [ ] 간이과세  [ ] 면세
-- 사업 시작일(개업일): __________
-- 직원/외주 고용: [ ] 없음  [ ] 직원 __명  [ ] 프리랜서 외주 있음
-- 다른 소득: [ ] 근로  [ ] 임대  [ ] 이자/배당  [ ] 없음
+## 0. Business Owner Basic Info
+- Business type (specific): __________________ (e.g., online clothing store, café, freelance developer)
+- Tax classification: [ ] General taxpayer  [ ] Simplified taxpayer  [ ] Tax-exempt
+- Business start date (opening date): __________
+- Employees/outsourcing: [ ] None  [ ] __ employees  [ ] Freelance outsourcing
+- Other income: [ ] Employment  [ ] Rental  [ ] Interest/dividends  [ ] None
 
-## 1. 매출 (귀속연도 = 작년 1~12월)
-| 구분 | 금액(원) |
+## 1. Revenue (attribution year = last Jan–Dec)
+| Category | Amount (KRW) |
 |------|---------|
-| 세금계산서 매출 | |
-| 카드 매출 | |
-| 현금영수증 매출 | |
-| 플랫폼 정산(배달앱/오픈마켓) | |
-| 기타 현금/계좌 매출 | |
-| **매출 합계** | |
-| (참고) 직전연도 매출 | |
+| Tax invoice revenue | |
+| Card revenue | |
+| Cash receipt revenue | |
+| Platform settlement (delivery app/open market) | |
+| Other cash/account revenue | |
+| **Total revenue** | |
+| (Reference) Prior-year revenue | |
 
-## 2. 비용 (적격증빙 있는 것 위주)
-| 항목 | 금액(원) | 증빙有? |
+## 2. Expenses (focus on items with qualified documentation)
+| Item | Amount (KRW) | Documented? |
 |------|---------|--------|
-| 매입(사입/원재료) | | |
-| 임차료 | | |
-| 인건비(직원 급여) | | |
-| 외주비(프리랜서 3.3%) | | |
-| 카드/현금영수증 경비 | | |
-| 통신·공과금·소모품 | | |
-| 차량유지비(업무분) | | |
-| 광고·수수료(플랫폼/PG) | | |
-| 이자비용(사업대출) | | |
-| 감가상각 대상 자산 취득 | | |
-| 기타 | | |
-| **비용 합계** | | |
+| Purchases (stock/raw materials) | | |
+| Rent | | |
+| Labor costs (employee salaries) | | |
+| Outsourcing costs (freelancer 3.3%) | | |
+| Card/cash receipt expenses | | |
+| Communications·utilities·consumables | | |
+| Vehicle maintenance (business portion) | | |
+| Advertising·fees (platform/PG) | | |
+| Interest expense (business loan) | | |
+| Acquisition of depreciable assets | | |
+| Other | | |
+| **Total expenses** | | |
 
-## 3. 종소세 공제 항목
-| 항목 | 금액/내용 |
+## 3. Comprehensive Income Tax Deduction Items
+| Item | Amount/Details |
 |------|----------|
-| 부양가족 수(본인 제외) | |
-| 국민연금 납입액 | |
-| 노란우산공제 납입액 | |
-| 연금저축+IRP 납입액 | |
-| 기부금 | |
-| 기납부세액(원천징수 3.3% 등) | |
-| 중간예납 납부액(작년 11월) | |
+| Number of dependents (excluding self) | |
+| National Pension contributions | |
+| Noranusan Mutual Aid (Yellow Umbrella) contributions | |
+| Pension savings + IRP contributions | |
+| Donations | |
+| Prepaid tax amount (3.3% withholding, etc.) | |
+| Interim prepayment (last November) | |
 
-## 4. 부가세용 (해당 시)
-| 항목 | 금액(원) |
+## 4. For VAT (if applicable)
+| Item | Amount (KRW) |
 |------|---------|
-| 과세 매출 | |
-| 면세 매출 | |
-| 매입세금계산서 합계 | |
-| 사업용카드/현금영수증 매입 | |
+| Taxable revenue | |
+| Tax-exempt revenue | |
+| Purchase tax invoice total | |
+| Business card/cash receipt purchases | |
 
 ---
-작성 후 "/hih-tax 이 워크시트로 세액 추정하고 절세 알려줘" 라고 하면 분석합니다.
+After filling it in, say "/hih-tax estimate the tax with this worksheet and tell me how to save on taxes" and it will analyze it.
