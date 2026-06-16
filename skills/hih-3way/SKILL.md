@@ -1,179 +1,251 @@
 ---
 name: hih-3way
-version: 1.0.0
+version: 2.0.0
 description: |
-  1-round 3모델 병렬 리뷰. Claude /review + /codex + /hih-glm을 동시에 실행하여
+  1-round 3모델 병렬 코드 리뷰. PM(이 세션)이 직접 실행하는 절차서.
+  GLM(call_glm) + Codex(codex exec) + Claude(PM 직접 분석)를 병렬 호출하여
   비교 테이블 + 합의율 + Composite gate를 출력한다.
-  hih-dev STEP 5를 독립 스킬로 추출한 것.
+  hih-dev STEP 5의 SSOT.
   Use when: "3-way review", "3-way 리뷰", "병렬 리뷰", "hih-3way", "모델 비교 리뷰"
 ---
 
 # /hih-3way — 3-Model Parallel Review (1-round)
 
-구현 완료 후 **Claude + OpenAI Codex + GLM 5.1** — 3개 모델이 동일한 diff를 독립 리뷰.
-3개 모두 동의한 발견 = 최우선 수정 대상, 1개만 지적 = PM이 직접 확인 후 판단.
+## 실행 주체
+
+**PM (이 세션)**. PM이 직접 각 도구를 호출하고 결과를 취합한다.
+이 스킬은 "에이전트가 알아서 실행"하는 게 아니라, **PM이 따라야 할 정확한 실행 절차서**다.
+
+## 도구 매핑 (실제 환경)
+
+| 리뷰어 | 호출 방식 | 도구 | 상태 |
+|--------|-----------|------|------|
+| GLM | `execute_code`에서 `call_glm()` | `/home/window11/project-manager/scripts/glm_client.py` | ✅ 정상 |
+| Codex | `terminal`에서 `codex exec` | `/home/window11/.local/bin/codex` | ⚠️ 인증 필요 |
+| Claude | PM이 직접 분석 또는 `delegate_task` | 현재 세션 | ✅ 정상 |
+
+> Codex 인증 실패 시 자동으로 2-way(Claude+GLM)로 강등된다.
 
 ---
 
-## 실행 순서 (총 ~5분, 3개 병렬)
+## STEP 0 — 사전 검증
 
-### Step 1: GLM dispatch (async)
-
-GLM을 pane 2에 먼저 보내 백그라운드에서 연산 시작.
+### 0a. 도구 가용성 확인
 
 ```bash
-# GLM을 해당 pane에 비동기 디스패치
-SESSION=$(basename $(pwd))  # 또는 HIH_GLM_SESSION
-tmux list-panes -t $SESSION | wc -l  # pane 2 존재 확인
-tmux send-keys -t ${SESSION}:1.2 "/hih-glm review HEAD" Enter
+# GLM
+python3 -c "import sys; sys.path.insert(0,'/home/window11/project-manager/scripts'); from glm_client import call_glm" 2>&1
+
+# Codex (인증 상태)
+codex exec "echo test" 2>&1 | grep -q "401\|Unauthorized" && echo "CODEX_AUTH_FAILED" || echo "CODEX_OK"
+
+# Claude — 별도 확인 불필요 (PM 자체)
 ```
 
-> pane 2가 없으면 /hih-glm 스킬이 자동 생성 + claude-glm 부팅.
+### 0b. 모드 결정
 
-### Step 2: Claude /review (빠름, ~30초)
+- 3개 전부 OK → **3-way 모드**
+- Codex만 실패 → **2-way 모드 (Claude+GLM)**, 합의 기준 조정
+- GLM 실패 → **중단**, 사용자에게 Z_AI_API_KEY 확인 요청
 
-- `/review` 스킬 실행 (Claude 자체 diff 리뷰)
-- CRITICAL/INFORMATIONAL 분류 + PASS/FAIL 판정
-- 결과를 임시 저장
+### 0c. 작업 디렉토리 초기화
 
 ```bash
-# /review 결과는 세션 내에 저장됨
-# (이 스킬의 호출자인 PM이 /review를 직접 실행하거나,
-#  이미 실행된 결과를 참조)
+mkdir -p /tmp/hih_3way
+rm -f /tmp/hih_3way/*.txt
 ```
-
-### Step 3: /codex (블로킹, ~5분)
-
-- `/codex review` 실행
-- 이 동안 GLM도 백그라운드에서 연산 중
-- codex 완료 시점에 GLM 응답도 대부분 완료됨
-
-```bash
-# /codex review 실행
-# 결과를 임시 저장
-```
-
-### Step 4: GLM 응답 캡처
-
-```bash
-SESSION=$(basename $(pwd))
-tmux capture-pane -t ${SESSION}.2 -p -S -3000 > /tmp/hih_3way_glm.txt
-```
-
-### Step 5: 비교 테이블 + 합의율 + Composite gate
-
-3개 모델의 결과를 취합하여 비교 테이블 생성.
 
 ---
 
-## 3-WAY REVIEW 결과 형식 (필수)
+## STEP 1 — 리뷰 대상 준비
 
-3개 모델 모두 완료 후, **반드시** 아래 비교 테이블을 출력:
+### 1a. 대상 확인
+
+사용자로부터 리뷰 대상(TARGET)을 받는다.
+- 파일 경로 (예: `/path/to/file.py`)
+- 디렉토리 (예: `src/auth/`)
+- PR/diff (예: `git diff HEAD~1`)
+
+### 1b. 코드 추출
+
+```
+TARGET = {사용자 지정 경로}
+CODE = read_file(TARGET) 또는 terminal("git diff ...")
+```
+
+### 1c. 공통 리뷰 프롬프트 준비
+
+```
+다음 코드를 리뷰하라. 목표: 버그, 보안, 성능, 설계 결함, 가독성 문제.
+
+[코드]
+{CODE}
+
+출력 형식 (반드시 준수):
+ISSUE-N: [제목]
+  심각도: CRITICAL | HIGH | MEDIUM | LOW | INFO
+  위치: [파일:라인 또는 함수명]
+  설명: [문제]
+  권고: [수정 방법]
+```
+
+---
+
+## STEP 2 — 병렬 리뷰 실행 (PM이 직접 호출)
+
+### 2a. GLM 리뷰 — `execute_code`
+
+```python
+import os, sys
+sys.path.insert(0, '/home/window11/project-manager/scripts')
+from glm_client import call_glm
+
+result = call_glm(
+    prompt=REVIEW_PROMPT,  # STEP 1c에서 준비
+    project="현재 프로젝트명",
+    feature="3way-review",
+    system="시니어 코드 리뷰어. 논리적/실행적 결함을 찾아라.",
+)
+# result['response']를 /tmp/hih_3way/glm.txt로 저장
+```
+
+**성공 조건**: `result['status'] == 'ok'`
+**실패 시**: 오류 메시지 기록, GLM은 리뷰어에서 제외
+
+### 2b. Codex 리뷰 — `terminal` (인증 시에만)
+
+```bash
+cd {리뷰 대상 프로젝트 루트}
+timeout 180 codex exec --skip-git-repo-check "{REVIEW_PROMPT}" > /tmp/hih_3way/codex.txt 2>&1
+# 401 감지 시 → CODEX_SKIP=true
+```
+
+**인증 실패 감지**: 출력에 `401 Unauthorized` 포함 시 Codex 스킵
+**타임아웃**: 180초 초과 시 Codex 스킵
+
+### 2c. Claude 리뷰 — PM 직접 분석
+
+PM(이 세션)이 동일한 프롬프트로 **직접** 코드를 분석한다.
+- CODE를 읽고 ISSUE-N 형식으로 리뷰 작성
+- 결과를 `/tmp/hih_3way/claude.txt`에 저장 (`write_file`)
+
+> 대안: 독립 컨텍스트가 필요하면 `delegate_task`로 별도 Claude 서브에이전트 사용.
+
+---
+
+## STEP 3 — PM 정규화 (수동 매핑)
+
+**자동 정규화는 불가능하다.** PM이 3개 결과를 직접 읽고 유사 이슈를 매핑한다.
+
+### 3a. 각 결과 읽기
+
+```
+read_file("/tmp/hih_3way/glm.txt")
+read_file("/tmp/hih_3way/codex.txt")  # 있으면
+read_file("/tmp/hih_3way/claude.txt")
+```
+
+### 3b. 이슈 정규화 규칙
+
+PM이 다음 기준으로 유사 이슈를 동일 ID로 그룹핑:
+1. **정확한 키워드 매칭**: "SQL 인젝션", "N+1 쿼리" 등 동일 용어
+2. **위치 일치**: 같은 파일/함수를 가리키면 같은 이슈로 간주
+3. **의미적 유사도**: "Lazy Loading Issue" ≈ "N+1 쿼리" — PM이 판단
+4. **모호한 케이스**: 별도 ID 부여 (나중에 미합의로 처리)
+
+> PM이 직접 판단한다. LLM이 자동으로 클러스터링하지 않는다.
+
+---
+
+## STEP 4 — 비교 테이블 + 합의율 (필수 출력)
+
+### 출력 형식
 
 ```
 ## 3-WAY REVIEW RESULT
-┌───────────────┬──────────┬───────┬────────────────────────────┐
-│ 모델          │ GATE     │ 발견수 │ 고유 발견                  │
-├───────────────┼──────────┼───────┼────────────────────────────┤
-│ Claude /review│ PASS/FAIL│ N건   │ {Claude만 찾은 것}         │
-│ /codex        │ PASS/FAIL│ N건   │ {Codex만 찾은 것}          │
-│ /hih-glm      │ PASS/FAIL│ N건   │ {GLM만 찾은 것}            │
-└───────────────┴──────────┴───────┴────────────────────────────┘
 
-모두 동의 (즉시 수정):   {3개 모델 모두 지적한 발견}
-2개 동의 (수정 권고):     {2개 이상 지적한 발견}
-1개만 지적 (PM 확인):    {단일 지적 — PM이 오탐인지 판단}
+리뷰 대상: {TARGET}
+모드: 3-way | 2-way (Codex 실패) | 2-way (GLM 실패)
+
+| 이슈 ID | 설명            | Claude | Codex | GLM | 합의 |
+|---------|-----------------|--------|-------|-----|------|
+| I-01    | {이슈 요약}     | O      | O     | O   | 3/3  |
+| I-02    | {이슈 요약}     | O      | X     | O   | 2/3  |
+| I-03    | {이슈 요약}     | X      | O     | X   | 1/3  |
+
+전원 동의 (즉시 수정): {3/3 이슈 목록}
+과반 동의 (수정 권고): {2/3 이슈 목록}
+단독 의견 (PM 검증):   {1/3 이슈 목록}
+
 합의율: X%
-
-Composite gate: PASS / FAIL
-Composite recommendation: <최우선 수정 항목 + 이유>
 ```
-
----
-
-## Composite Gate 판정 기준
-
-| 조건 | 판정 | 후속 액션 |
-|------|------|-----------|
-| 3개 모두 PASS | **PASS** | 다음 단계 진행 |
-| 1개 이상 FAIL + "모두 동의" 발견 존재 | **FAIL** | 수정 후 3-way 재실행 |
-| 1개만 FAIL + "모두 동의" 발견 없음 | **CONDITIONAL PASS** | PM이 단일 지적 검증 후 판단 |
 
 ### 합의율 계산
 
 ```
-합의율 = (모두 동의 발견 수 / 전체 고유 발견 수) × 100%
+합의율 = (3/3 또는 2/3 합의 이슈 수) / (전체 고유 이슈 수) × 100
 ```
 
-- 합의율 100%: 3개 모델이 완벽히 동일한 발견
-- 합의율 0%: 모든 발견이 서로 다름 (모델마다 다른 관점)
-
 ---
 
-## 발견 분류별 액션
+## STEP 5 — Composite Gate 판정
 
-### 모두 동의 (3/3 동의) → 즉시 수정
-- 3개 모델이 모두 지적한 사항
-- 의심할 여지 없는 진짜 문제
-- 수정 후 재리뷰 필요 없으면 다음 단계 진행
+### 게이트 기준
 
-### 2개 동의 (2/3 동의) → 수정 권고
-- 다수 모델이 지적한 사항
-- 실제 문제일 가능성 높음
-- 수정 권고, PM 판단에 따라 보류 가능
-
-### 1개만 지적 (1/3) → PM 검증
-- 단일 모델만 지적한 사항
-- 오탐(false positive) 가능성 존재
-- PM이 직접 grep/python으로 검증 후 판단
-- GLM 5.1은 검증됨: false concern 비율이 4.6 대비 현저히 낮음
-- 단, 0은 아님 (PM이 팩트체크 백스톱 역할)
-
----
-
-## 타임아웃 및 에러 처리
-
-| 상황 | 처리 |
+| 조건 | GATE |
 |------|------|
-| GLM 10분 타이임아웃 | 강제 캡처 + "GLM 응답 없음 — pane 직접 확인" 경고 |
-| /codex 실패 | 2-way 리뷰로 강등 (Claude + GLM만) + 경고 출력 |
-| /review 실패 | 2-way 리뷰로 강등 (Codex + GLM만) + 경고 출력 |
-| 2개 이상 모델 실패 | FAIL + "수동 리뷰 필요" 에스컬레이션 |
+| 전원 PASS + "전원 동의" 이슈 0건 | **PASS** |
+| "전원 동의" 이슈 1건+ (CRITICAL/HIGH) | **FAIL** — 수정 후 재실행 |
+| 과반 동의만 있고 전원 동의 없음 | **CONDITIONAL** — PM이 단독 이슈 검증 후 판정 |
+
+### 2-way 모드 기준 (Codex 실패 시)
+
+| 조건 | GATE |
+|------|------|
+| 2/2 동의 이슈 0건 | **PASS** |
+| 2/2 동의 + CRITICAL/HIGH | **FAIL** |
+| 1/2만 있음 | **CONDITIONAL** — PM이 직접 판정 |
 
 ---
 
-## hih-dev에서의 호출 방식
+## STEP 6 — 후속 액션
 
-hih-dev STEP 5에서는 다음과 같이 참조:
-
-```
-> hih-3way 스킬 실행
-```
-
-hih-dev은 이 스킬을 호출하고, 결과를 받아 STEP 6으로 진행 여부를 판단.
+- **PASS** → 다음 단계로 진행 (hih-dev STEP 6 등)
+- **CONDITIONAL** → PM이 단독 이슈 각각 검증 → CONFIRM/REJECT 판정
+- **FAIL** → 수정 후 STEP 2부터 재실행 (최대 3회)
 
 ---
 
-## SKIP 조건
+## 실패 케이스 대응
 
-- 코드 변경 없음 (docs-only, 설정 파일만 변경)
-- `--fast-merge` 플래그: /review만 실행 (codex/glm 생략)
-- 단일 라인 변경 등 자명한 수정
+| 상황 | 대응 |
+|------|------|
+| GLM 키 없음 | 중단. `~/.secrets` 또는 `glm-key-helper.sh` 확인 안내 |
+| Codex 401 | 자동 2-way 강등. 게이트 기준 조정. 사용자에게 인증 안내 |
+| Codex 타임아웃 | Codex 스킵, 2-way 진행 |
+| 모델이 형식 미준수 | PM이 결과에서 이슈 추출, 빈 결과면 "이슈 없음"으로 기록 |
+| 코드 너무 김 | 청크 분할 또는 "핵심 파일만"으로 범위 축소 |
 
 ---
 
-## 실행 시작 시 출력 형식
+## 호출 명령
 
 ```
-## /hih-3way start
-대상: HEAD (또는 {commit hash})
-모델: Claude /review + /codex + GLM 5.1
-
-▶ Step 1: GLM dispatch (async)...
-▶ Step 2: Claude /review...
-▶ Step 3: /codex...
-▶ Step 4: GLM 캡처...
-▶ Step 5: 비교 테이블 생성...
+/hih-3way [파일 경로 또는 디렉토리]
+/hih-3way git diff HEAD~1
 ```
 
-각 Step 완료 시 `✅ Step N done` 출력 후 다음 Step 진행.
+또는 대화 내에서:
+```
+이 코드에 3-way review 돌려줘.
+```
+
+---
+
+## 주의사항
+
+1. **PM이 직접 실행**: 이 스킬은 LLM이 "알아서" 실행하는 게 아니다. PM이 각 단계를 도구 호출로 수행한다.
+2. **정규화는 수동**: 3개 결과의 자동 클러스터링은 불가능. PM이 읽고 매핑한다.
+3. **소요 시간**: 3-way ~3분, 2-way ~1분 (GLM이 가장 느림)
+4. **비용**: GLM은 Z.AI 정액제 (호출당 비용 없음). Codex는 OpenAI API 비용.
+5. **결과 보관**: `/tmp/hih_3way/` 결과 파일은 hih-3way-hard에서 재사용 가능.
