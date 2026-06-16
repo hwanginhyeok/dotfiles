@@ -37,6 +37,7 @@ STEP 5    3-way review     — run /review(Claude) + /codex + /hih-glm in parall
             ├ output the 3-way comparison table (agreement rate + composite gate)
             └ all-agreed findings → fix immediately / single-flagged findings → PM verification
 STEP 6    /health         — composite code quality score (type check + linter + tests)
+STEP 6.3  Security scan    — security-auditor agent on the diff (escalate to /cso for high-risk), ship-blocking gate
 STEP 6.5  /qa             — web QA (verify UI + API in a real browser, conditional)
             ├ if it's a web app, auto-run: check deploy URL or localhost then test via browse
             └ if not a web app (Python library, CLI, etc.) → SKIP
@@ -412,6 +413,57 @@ STEP 4에서 TDD 원칙에 따라 작성된 테스트가 이 단계에서 검증
 
 ---
 
+## STEP 6.3 — Security Scan (ship-blocking gate)
+
+After code quality passes (STEP 6), run a dedicated security scan **before** /qa and /ship.
+This closes the gap where the only security check was a single checklist line in STEP 4.5 and
+the adversarial pass in STEP 5. Security is now an explicit gate, not a side effect.
+
+### Scope — diff only (fast, relevant)
+Scan the newly added/changed code, not the whole repo:
+```bash
+git diff master..HEAD
+```
+Focus areas: hardcoded secrets/tokens, injection (SQL/command/path), authn/authz gaps,
+input validation, SSRF/open redirect, unsafe deserialization, and **newly added dependencies**
+(`package.json` / `requirements.txt` / lockfiles → supply-chain risk).
+
+### Tool selection (mirrors STEP 5's 3way ↔ 3way-hard)
+| Situation | Tool | Why |
+|-----------|------|-----|
+| Normal feature change | `security-auditor` agent on the diff | Isolated context, fast, zero-noise |
+| **High-risk change** (auth / secrets / payment / external user input / new deps) | `/cso` (daily mode, 8/10 gate) | Infra-first: secrets archaeology + dependency supply chain + OWASP/STRIDE |
+| Pre-release / monthly | `/cso` comprehensive (2/10 bar) | Deep scan, trend tracking |
+
+Default: dispatch the `security-auditor` agent. Auto-escalate to `/cso` when the diff touches
+any high-risk surface above. The escalation is automatic (no extra flag), same as STEP 5.
+
+### Gate rules
+| Severity | Action |
+|----------|--------|
+| **CRITICAL / HIGH** | **Block ship.** Fix → return to STEP 4 → re-scan. Do NOT proceed to STEP 7. |
+| **MEDIUM** | Fix now, or register in PREPARED_TASK with explicit justification + PM sign-off |
+| **LOW / INFO** | Note in the PR description, proceed |
+| **0 findings** | PASS → proceed to STEP 6.5 |
+
+> Secret-handling rules (global CLAUDE.md) are enforced here: no plaintext PAT in remotes,
+> no inline secrets in bash, `.env` masked on grep. A hardcoded secret in the diff = CRITICAL.
+
+### Output
+```
+## Security scan result
+Tool: security-auditor (diff) / cso (high-risk: {reason})
+Findings: Critical N / High N / Medium N / Low N
+Gate: PASS / BLOCKED ({blocking items})
+```
+
+**SKIP conditions:**
+- docs-only change (no executable code)
+- config-only change with no secret surface and no new dependency
+- `--no-sec` flag (explicit opt-out — record the reason in the PR)
+
+---
+
 ## STEP 6.5 — /qa (Conditional)
 
 **Auto-detect whether it's a web app, then decide whether to run:**
@@ -555,6 +607,7 @@ For a web app or external deploy, monitor for 30 minutes right after deployment.
 | Tasks still remaining | STEP 8 (hih-clear) |
 | Fast merge needed | STEP 5 → run only /review (skip codex/glm) |
 | Not a web app or `--no-qa` | STEP 6.5 (qa) |
+| Docs-only / config-only no secret surface / `--no-sec` | STEP 6.3 (security scan) |
 | No code changes (docs-only) | STEP 4.5 (2-phase review) |
 
 ---
@@ -575,6 +628,7 @@ Pipeline:
   STEP 4.5 2-phase subagent review (스펙 준수 + 코드 품질)
   STEP 5 3-way review (Claude + Codex + GLM)
   STEP 6 health
+  STEP 6.3 security scan (ship-blocking gate)
   STEP 6.5 qa (auto-run if web app)
   STEP 7 ship
   STEP 8 hih-clear
