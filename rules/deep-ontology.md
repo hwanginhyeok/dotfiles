@@ -1,1 +1,0 @@
-/home/window11/project-manager/global-rules/deep-ontology.md

@@ -80,16 +80,17 @@
 ## Auto-loaded Every Session
 > **Mechanism**: Claude Code auto-loads `~/.claude/rules/*.md` — these are symlinks into `global-rules/` (the SSOT source). To make a rule auto-load, symlink it into `~/.claude/rules/`; remove the symlink to stop. (Verified 2026-06-23.)
 
-Auto-loaded (9): `ssot` · `task-management` · `test-first` · `publish-gate` · `cron` · `doc-size` · `overnight` · `deep-fp` · `deep-ontology`
+Auto-loaded (8): `ssot` · `task-management` · `test-first` · `publish-gate` · `cron` · `doc-size` · `overnight` · `llm-security`
 
-## In global-rules/ but NOT auto-loaded (read on demand)
+## In global-rules/ but NOT auto-loaded (read on demand / via skill)
 - `llm-architecture.md` — tier routing (the condensed core is already in "LLM Operating Rules" above)
-- `llm-security.md` — LLM trust-boundary policy (1st-party vs 3rd-party)
 - `pm-protocol.md` — PM behavior protocol
+- `deep-fp.md` → `/hih-fp` (first-principles thinking)
+- `deep-ontology.md` → `/hih-ontology` (ontology thinking)
 - `model-guide.md` / `model-guide-codex.md` / `model-guide-glm.md` — per-model reference
 - `gdrive.md` — GDrive folder mapping
 
-Skill triggers (orthogonal to auto-load): `/hih-fp`→deep-fp, `/hih-ontology`→deep-ontology, `/hih-cron`→cron, `/overnight`→overnight, `doc-size` referenced when a .md exceeds 500 lines.
+Skill triggers (orthogonal to auto-load): `/hih-cron`→cron, `/overnight`→overnight, `/hih-fp`→deep-fp, `/hih-ontology`→deep-ontology, `doc-size` referenced when a .md exceeds 500 lines.
 
 ## Skill Auto-Suggestion Rule
 When a user request comes in, refer to memory's `reference_skill_usage.md` (auto-accumulated skill invocation frequency) to automatically suggest a contextually appropriate skill. However, even with a frequency of 0, suggestion is possible if the context matches — frequency is only a supplementary indicator, never an absolute criterion.
