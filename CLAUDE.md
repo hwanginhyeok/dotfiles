@@ -59,9 +59,8 @@
 
 # Common Coding Rules
 
-- Write commit messages in Korean (human-facing / git history readability)
-- Prefer Korean for log messages too (English allowed for error logs)
-- Variable/function names in English; in-code comments may be Korean or English per project
+> Language for commits / logs / variable names: see **Language Policy** above (commits & logs Korean, names English).
+- In-code comments may be Korean or English per project.
 
 # Project Manager (pm.py)
 
