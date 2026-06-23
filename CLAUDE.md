@@ -29,7 +29,9 @@
 > **GLM demotion** (2026-05-18): zai's 5-hour flat-rate quota is constantly reached → discarded as a worker. Use only for external independent opinions (/hih-glm consult, codex alternative) or as a Sonnet fallback.
 > Details: `global-rules/llm-architecture.md`
 
-# Secret Handling Rules (Security — added after the 2026-05-20 GHPAT-LEAK + Supabase token exposure incident)
+# Secret Handling Rules (Security)
+
+> Origin: 2026-05-20 GHPAT-LEAK + Supabase token exposure incident (kept as a one-line pointer; rules below are what matters).
 
 ## Git Authentication
 - **Do not embed a plaintext PAT in the git remote URL**. Prefer ssh (`git@github.com:user/repo.git`)
@@ -93,6 +95,8 @@ Auto-loaded (8): `ssot` · `task-management` · `test-first` · `publish-gate` �
 Skill triggers (orthogonal to auto-load): `/hih-cron`→cron, `/overnight`→overnight, `/hih-fp`→deep-fp, `/hih-ontology`→deep-ontology, `doc-size` referenced when a .md exceeds 500 lines.
 
 ## Skill Auto-Suggestion Rule
+> **Precedence**: a user-typed `/skill` and explicit skill routing (project CLAUDE.md "Skill routing" table) take priority. This frequency-based suggestion is supplementary only.
+
 When a user request comes in, refer to memory's `reference_skill_usage.md` (auto-accumulated skill invocation frequency) to automatically suggest a contextually appropriate skill. However, even with a frequency of 0, suggestion is possible if the context matches — frequency is only a supplementary indicator, never an absolute criterion.
 
 # Screenshot Check
