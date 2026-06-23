@@ -77,19 +77,19 @@
 
 > Location: `/home/window11/project-manager/global-rules/`
 
-## Auto-loaded Every Session (5 core)
-- `ssot.md` — SSOT + symlink principle
-- `task-management.md` — 3-stage task flow
-- `test-first.md` — verify-before-adopt
-- `publish-gate.md` — external publishing approval gate
-- `llm-architecture.md` — Opus=manager / Sonnet=worker routing (2026-05-18 GLM demotion)
+## Auto-loaded Every Session
+> **Mechanism**: Claude Code auto-loads `~/.claude/rules/*.md` — these are symlinks into `global-rules/` (the SSOT source). To make a rule auto-load, symlink it into `~/.claude/rules/`; remove the symlink to stop. (Verified 2026-06-23.)
 
-## Invoked via Skill When Needed (not auto-loaded)
-- `cron.md` → `/hih-cron` (when adding/modifying cron)
-- `overnight.md` → `/overnight` (during overnight work)
-- `deep-fp.md` → `/hih-fp` (when first-principles thinking is needed)
-- `deep-ontology.md` → `/hih-ontology` (when ontology thinking is needed)
-- `doc-size.md` → reference when a .md exceeding 500 lines is found
+Auto-loaded (9): `ssot` · `task-management` · `test-first` · `publish-gate` · `cron` · `doc-size` · `overnight` · `deep-fp` · `deep-ontology`
+
+## In global-rules/ but NOT auto-loaded (read on demand)
+- `llm-architecture.md` — tier routing (the condensed core is already in "LLM Operating Rules" above)
+- `llm-security.md` — LLM trust-boundary policy (1st-party vs 3rd-party)
+- `pm-protocol.md` — PM behavior protocol
+- `model-guide.md` / `model-guide-codex.md` / `model-guide-glm.md` — per-model reference
+- `gdrive.md` — GDrive folder mapping
+
+Skill triggers (orthogonal to auto-load): `/hih-fp`→deep-fp, `/hih-ontology`→deep-ontology, `/hih-cron`→cron, `/overnight`→overnight, `doc-size` referenced when a .md exceeds 500 lines.
 
 ## Skill Auto-Suggestion Rule
 When a user request comes in, refer to memory's `reference_skill_usage.md` (auto-accumulated skill invocation frequency) to automatically suggest a contextually appropriate skill. However, even with a frequency of 0, suggestion is possible if the context matches — frequency is only a supplementary indicator, never an absolute criterion.
